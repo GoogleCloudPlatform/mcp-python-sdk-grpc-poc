@@ -52,6 +52,7 @@ from mcp.shared.session import (
     BaseSession,
     RequestResponder,
 )
+from mcp.server.transport_session import TransportSession
 from mcp.shared.version import SUPPORTED_PROTOCOL_VERSIONS
 
 
@@ -69,6 +70,7 @@ ServerRequestResponder = (
 
 
 class ServerSession(
+    TransportSession,
     BaseSession[
         types.ServerRequest,
         types.ServerNotification,

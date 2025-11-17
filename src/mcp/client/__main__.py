@@ -11,6 +11,7 @@ import mcp.types as types
 from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
 from mcp.client.stdio import StdioServerParameters, stdio_client
+from mcp.client.grpc_transport_session import GRPCTransportSession
 from mcp.shared.message import SessionMessage
 from mcp.shared.session import RequestResponder
 
@@ -51,21 +52,37 @@ async def run_session(
 
 async def main(command_or_url: str, args: list[str], env: list[tuple[str, str]]):
     env_dict = dict(env)
+    parsed_url = urlparse(command_or_url)
 
-    if urlparse(command_or_url).scheme in ("http", "https"):
+    if parsed_url.scheme in ("http", "https"):
         # Use SSE client for HTTP(S) URLs
         async with sse_client(command_or_url) as streams:
             await run_session(*streams)
+    elif parsed_url.scheme == "grpc" or ":" in command_or_url:
+        # Use gRPC session if scheme is "grpc://" or if it looks like a host:port.
+        target = parsed_url.netloc if parsed_url.scheme == "grpc" else command_or_url
+        if not target:
+             logger.error("Invalid gRPC target: %s", command_or_url)
+             return
+        session = GRPCTransportSession(target=target)
+        logger.info("Initializing gRPC session to %s", target)
+        try:
+            await session.initialize()
+            logger.info("gRPC session initialized")
+            # Example interaction: List tools
+            tools = await session.list_tools()
+            logger.info("Listed tools: %s", tools)
+        except Exception as e:
+            logger.error("Error during gRPC session: %s", e)
     else:
         # Use stdio client for commands
         server_parameters = StdioServerParameters(command=command_or_url, args=args, env=env_dict)
         async with stdio_client(server_parameters) as streams:
             await run_session(*streams)
 
-
 def cli():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command_or_url", help="Command or URL to connect to")
+    parser.add_argument("command_or_url", help="Command or URL to connect to (e.g., http://..., https://..., grpc://host:port, host:port for gRPC, or a command)")
     parser.add_argument("args", nargs="*", help="Additional arguments")
     parser.add_argument(
         "-e",
