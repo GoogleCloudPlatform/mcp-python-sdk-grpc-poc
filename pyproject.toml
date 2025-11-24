@@ -64,6 +64,7 @@ dev = [
     "pytest-pretty>=1.2.0",
     "inline-snapshot>=0.23.0",
     "dirty-equals>=0.9.0",
+    "pytest-asyncio",
 ]
 docs = [
     "mkdocs>=1.6.1",
