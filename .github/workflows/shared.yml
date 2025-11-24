@@ -57,15 +57,24 @@ jobs:
 
           if [[ -f "$TARGET_FILE" ]]; then
             echo "Patching imports in $TARGET_FILE"
-            if [[ "$RUNNER_OS" == "Linux" || "$RUNNER_OS" == "macOS" ]]; then
-              sed -i 's/import mcp_pb2 as mcp__pb2/from . import mcp_pb2 as mcp__pb2/g' "$TARGET_FILE"
-            elif [[ "$RUNNER_OS" == "Windows" ]]; then
-              (Get-Content "$TARGET_FILE") | ForEach-Object { $_ -replace 'import mcp_pb2 as mcp__pb2', 'from . import mcp_pb2 as mcp__pb2' } | Set-Content "$TARGET_FILE"
-            fi
+            sed -i 's/import mcp_pb2 as mcp__pb2/from . import mcp_pb2 as mcp__pb2/g' "$TARGET_FILE"
           else
             echo "Warning: Target file $TARGET_FILE not found."
           fi
         shell: bash
+        if: runner.os != 'Windows'
+
+      - name: Patch imports for CI (Windows)
+        run: |
+          $TARGET_FILE = "src/mcp/proto/mcp_pb2_grpc.py"
+          if (Test-Path $TARGET_FILE) {
+            Write-Host "Patching imports in $TARGET_FILE"
+            (Get-Content $TARGET_FILE) -replace 'import mcp_pb2 as mcp__pb2', 'from . import mcp_pb2 as mcp__pb2' | Set-Content $TARGET_FILE
+          } else {
+            Write-Warning "Target file $TARGET_FILE not found."
+          }
+        shell: pwsh
+        if: runner.os == 'Windows'
 
       - name: Run pytest
         run: uv run --frozen --no-sync pytest
