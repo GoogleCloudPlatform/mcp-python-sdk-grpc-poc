@@ -580,7 +580,21 @@ async def test_call_tool_grpc_transport_success(
                 assert content_block.resource.mimeType == expected["resource"]["mimeType"]
 
         if result.structuredContent is not None and expected_structured_content is not None:
-            assert result.structuredContent == expected_structured_content
+            if tool_name == "get_image":
+                actual_data = result.structuredContent.pop('data', None)
+                expected_data = expected_structured_content.pop('data', None)
+                assert result.structuredContent == expected_structured_content
+                try:
+                    actual_img = PILImage.open(BytesIO(base64.b64decode(actual_data)))
+                    expected_img = PILImage.open(BytesIO(base64.b64decode(expected_data)))
+                    assert list(actual_img.getdata()) == list(expected_img.getdata())
+                except Exception as e:
+                    pytest.fail(f"Structured content image comparison failed: {e}")
+                # Add the data back in case the objects are used elsewhere
+                result.structuredContent['data'] = actual_data
+                expected_structured_content['data'] = expected_data
+            else:
+                assert result.structuredContent == expected_structured_content
         else:
             assert result.structuredContent is None or result.structuredContent == {}
     finally:
