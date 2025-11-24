@@ -562,7 +562,7 @@ async def test_call_tool_grpc_transport_success(
             if expected["type"] == "text":
                 assert content_block.text == expected["text"]
             elif expected["type"] == "image":
-                assert content_block.data == expected["data"]
+                assert base64.b64decode(content_block.data) == base64.b64decode(expected["data"])
                 assert content_block.mimeType == expected["mimeType"]
             elif expected["type"] == "audio":
                 assert content_block.data == expected["data"]
