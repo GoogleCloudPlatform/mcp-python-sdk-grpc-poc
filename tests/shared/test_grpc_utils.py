@@ -64,9 +64,8 @@ async def test_get_protocol_version_from_context_unsupported_version(mock_contex
 
     await grpc_utils.get_protocol_version_from_context(mock_context, supported_versions)
 
-    assert mock_context.send_initial_metadata.call_count == 2
-    mock_context.send_initial_metadata.assert_called_with([(grpc_utils.MCP_PROTOCOL_VERSION_KEY, version.LATEST_PROTOCOL_VERSION)])
-    assert mock_context.abort.call_count == 2
+    mock_context.send_initial_metadata.assert_called_once_with([(grpc_utils.MCP_PROTOCOL_VERSION_KEY, version.LATEST_PROTOCOL_VERSION)])
+    mock_context.abort.assert_called_once()
     args, kwargs = mock_context.abort.call_args
     assert args[0] == grpc.StatusCode.UNIMPLEMENTED
 
