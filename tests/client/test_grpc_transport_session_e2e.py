@@ -16,7 +16,7 @@ import pytest
 from mcp.client.grpc_transport_session import GRPCTransportSession
 from mcp.shared.exceptions import McpError
 from mcp.server.fastmcp.server import Context, FastMCP
-from mcp.server.grpc import create_mcp_server
+from mcp.server.grpc import create_mcp_grpc_server
 from mcp import types
 
 
@@ -164,7 +164,7 @@ def server_port() -> int:
 async def grpc_server(server_port: int) -> Generator[None, None, None]:
     """Start a gRPC server in process."""
     server_instance = setup_test_server(server_port)
-    server = await create_mcp_server(
+    server = await create_mcp_grpc_server(
         target=f"127.0.0.1:{server_port}", mcp_server=server_instance
     )
 
@@ -179,7 +179,7 @@ async def grpc_server(server_port: int) -> Generator[None, None, None]:
 async def empty_grpc_server(server_port: int) -> Generator[None, None, None]:
     """Start a gRPC server in process with no tools."""
     server_instance = setup_empty_test_server(server_port)
-    server = await create_mcp_server(
+    server = await create_mcp_grpc_server(
         target=f"127.0.0.1:{server_port}", mcp_server=server_instance
     )
 

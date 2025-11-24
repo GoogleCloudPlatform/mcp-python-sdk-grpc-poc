@@ -20,7 +20,7 @@ from mcp import types
 import socket
 from collections.abc import Generator
 from mcp.server.fastmcp.server import Context, FastMCP
-from mcp.server.grpc import create_mcp_server
+from mcp.server.grpc import create_mcp_grpc_server
 from mcp import types
 from io import BytesIO
 from PIL import Image as PILImage
@@ -52,7 +52,7 @@ def server_port() -> int:
 async def grpc_server(server_port: int) -> Generator[None, None, None]:
     """Start a gRPC server in process."""
     server_instance = setup_test_server(server_port)
-    server = await create_mcp_server(
+    server = await create_mcp_grpc_server(
         target=f"127.0.0.1:{server_port}", mcp_server=server_instance
     )
 

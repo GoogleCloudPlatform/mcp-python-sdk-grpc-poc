@@ -7,7 +7,6 @@ import re
 from collections.abc import AsyncIterator, Awaitable, Callable, Collection, Iterable, Sequence
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from typing import Any, Generic, Literal, Optional
-
 import anyio
 import pydantic_core
 from pydantic import BaseModel
@@ -21,7 +20,6 @@ from starlette.responses import Response
 from starlette.routing import Mount, Route
 from starlette.types import Receive, Scope, Send
 from concurrent.futures import Executor
-
 
 from mcp.server.auth.middleware.auth_context import AuthContextMiddleware
 from mcp.server.auth.middleware.bearer_auth import BearerAuthBackend, RequireAuthMiddleware
@@ -738,8 +736,8 @@ class FastMCP(Generic[LifespanResultT]):
         """Run the server with gRPC transport."""
         # Imports are not at the top of file because grpc
         # is an optional dependency.
-        from mcp.server.grpc import create_mcp_server # pylint: disable=g-import-not-at-top
-        server = await create_mcp_server(
+        from mcp.server.grpc import create_mcp_grpc_server # pylint: disable=g-import-not-at-top
+        server = await create_mcp_grpc_server(
             mcp_server=self,
             target=self.settings.target
         )

@@ -16,7 +16,7 @@ from mcp import types
 from mcp.client.grpc_transport_session import GRPCTransportSession
 from mcp.proto import mcp_pb2, mcp_pb2_grpc
 from mcp.server.fastmcp.server import FastMCP
-from mcp.server.grpc import create_mcp_server
+from mcp.server.grpc import create_mcp_grpc_server
 from mcp.shared.exceptions import McpError
 from mcp.shared import version
 
@@ -145,7 +145,7 @@ async def grpc_server(server_port: int, tmp_path: Path) -> Generator[None, None,
     (test_dir / "readme.md").write_text("# Test Readme")
     (test_dir / "config.json").write_text('{"test": "value"}')
     server_instance = setup_test_server(server_port, test_dir)
-    server = await create_mcp_server(
+    server = await create_mcp_grpc_server(
         target=f"127.0.0.1:{server_port}", mcp_server=server_instance
     )
 
@@ -573,7 +573,7 @@ def failing_server_port() -> int:
 async def failing_grpc_server(failing_server_port: int) -> Generator[None, None, None]:
     """Start a gRPC server in process that fails on list_tools."""
     server_instance = setup_failing_test_server(failing_server_port)
-    server = await create_mcp_server(
+    server = await create_mcp_grpc_server(
         target=f"127.0.0.1:{failing_server_port}", mcp_server=server_instance
     )
 
@@ -587,7 +587,7 @@ async def failing_grpc_server_for_resources(
 ) -> Generator[None, None, None]:
     """Start a gRPC server in process that fails on list_resources."""
     server_instance = setup_failing_test_server_for_resources(failing_server_port)
-    server = await create_mcp_server(
+    server = await create_mcp_grpc_server(
         target=f"127.0.0.1:{failing_server_port}", mcp_server=server_instance
     )
 
@@ -603,7 +603,7 @@ async def failing_grpc_server_for_resource_templates(
     server_instance = setup_failing_test_server_for_resource_templates(
         failing_server_port
     )
-    server = await create_mcp_server(
+    server = await create_mcp_grpc_server(
         target=f"127.0.0.1:{failing_server_port}", mcp_server=server_instance
     )
 

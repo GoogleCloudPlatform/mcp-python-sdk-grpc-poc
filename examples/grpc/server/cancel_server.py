@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from mcp.server.fastmcp import FastMCP
-from mcp.server.grpc import create_mcp_server
+from mcp.server.grpc import create_mcp_grpc_server
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ async def main():
             logger.info("long_running_tool cancelled")
             return "Tool was cancelled"
 
-    server = await create_mcp_server(target="127.0.0.1:50051", mcp_server=mcp)
+    server = await create_mcp_grpc_server(target="127.0.0.1:50051", mcp_server=mcp)
     logger.info("gRPC server started on 127.0.0.1:50051")
     try:
         await server.wait_for_termination()

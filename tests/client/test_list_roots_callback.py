@@ -2,6 +2,7 @@ import pytest
 from pydantic import FileUrl
 
 from mcp.client.session import TransportSession
+from mcp.client.session import ClientSession
 from mcp.server.fastmcp.server import Context
 from mcp.server.session import ServerSession
 from mcp.shared.context import RequestContext

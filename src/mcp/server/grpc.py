@@ -332,7 +332,7 @@ def attach_mcp_server_to_grpc_server(
   if mcp_server.settings.grpc_enable_reflection:
     _enable_grpc_reflection(server)
 
-async def create_mcp_server(
+async def create_mcp_grpc_server(
     mcp_server,
     target: str = "127.0.0.1:50051",
 ) -> aio.Server:

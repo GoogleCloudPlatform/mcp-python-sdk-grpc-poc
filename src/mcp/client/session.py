@@ -299,7 +299,6 @@ class ClientSession(
         else:
             logger.warning(f"Tool {name} not listed by server, cannot validate any structured content")
 
-
     async def list_prompts(self, cursor: str | None = None) -> types.ListPromptsResult:
         """Send a prompts/list request."""
         return await self.send_request(
