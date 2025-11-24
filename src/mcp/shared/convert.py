@@ -16,8 +16,8 @@ from mcp import types
 from mcp.types import ErrorData
 from mcp.shared.exceptions import McpError
 from mcp.proto import mcp_pb2
-from google3.google.protobuf import duration_pb2
-from google3.google.protobuf import struct_pb2
+from google.protobuf import duration_pb2
+from google.protobuf import struct_pb2
 
 logger = logging.getLogger(__name__)
 

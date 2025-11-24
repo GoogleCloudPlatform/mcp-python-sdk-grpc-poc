@@ -8,7 +8,7 @@ import unittest.mock
 
 from mcp.proto import mcp_pb2, mcp_pb2_grpc
 from mcp.shared import version
-from google3.google.protobuf import struct_pb2
+from google.protobuf import struct_pb2
 
 from mcp.client.grpc_transport_session import GRPCTransportSession
 from mcp.client.cache import CacheEntry

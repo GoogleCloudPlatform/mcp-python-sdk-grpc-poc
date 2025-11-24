@@ -6,8 +6,8 @@ import unittest.mock
 import pytest
 
 from google.protobuf import json_format
-from google3.google.protobuf import duration_pb2
-from google3.google.protobuf.struct_pb2 import Struct
+from google.protobuf import duration_pb2
+from google.protobuf.struct_pb2 import Struct
 
 from mcp.shared import convert
 from mcp.shared.exceptions import McpError
