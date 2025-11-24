@@ -51,6 +51,22 @@ jobs:
       - name: Install the project
         run: uv sync --frozen --all-extras --python ${{ matrix.python-version }} --resolution ${{ matrix.dep-resolution }}
 
+      - name: Patch imports for CI
+        run: |
+          TARGET_FILE="src/mcp/proto/mcp_pb2_grpc.py"
+
+          if [[ -f "$TARGET_FILE" ]]; then
+            echo "Patching imports in $TARGET_FILE"
+            if [[ "$RUNNER_OS" == "Linux" || "$RUNNER_OS" == "macOS" ]]; then
+              sed -i 's/import mcp_pb2 as mcp__pb2/from . import mcp_pb2 as mcp__pb2/g' "$TARGET_FILE"
+            elif [[ "$RUNNER_OS" == "Windows" ]]; then
+              (Get-Content "$TARGET_FILE") | ForEach-Object { $_ -replace 'import mcp_pb2 as mcp__pb2', 'from . import mcp_pb2 as mcp__pb2' } | Set-Content "$TARGET_FILE"
+            fi
+          else
+            echo "Warning: Target file $TARGET_FILE not found."
+          fi
+        shell: bash
+
       - name: Run pytest
         run: uv run --frozen --no-sync pytest
 
