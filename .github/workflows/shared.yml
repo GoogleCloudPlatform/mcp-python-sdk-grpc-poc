@@ -48,9 +48,6 @@ jobs:
           enable-cache: true
           version: 0.7.2
 
-      - name: Install the project
-        run: uv sync --frozen --all-extras --python ${{ matrix.python-version }} --resolution ${{ matrix.dep-resolution }}
-
       - name: Patch imports for CI
         run: |
           TARGET_FILE="src/mcp/proto/mcp_pb2_grpc.py"
@@ -75,6 +72,9 @@ jobs:
           }
         shell: pwsh
         if: runner.os == 'Windows'
+
+      - name: Install the project
+        run: uv sync --frozen --all-extras --python ${{ matrix.python-version }} --resolution ${{ matrix.dep-resolution }}
 
       - name: Run pytest
         run: uv run --frozen --no-sync pytest
