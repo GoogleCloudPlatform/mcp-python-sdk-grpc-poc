@@ -1,4 +1,7 @@
-# TODO(asheshvidyut): Add build from source support using `pip install .`
+import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "proto"))
 
 from .client.transport_session import TransportSession
 from .client.session import ClientSession
