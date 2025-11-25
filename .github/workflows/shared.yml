@@ -1,0 +1,96 @@
+name: Shared Checks
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  COLUMNS: 150
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          version: 0.7.2
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-extras --python 3.10
+
+      - uses: pre-commit/action@v3.0.0
+        with:
+          extra_args: --all-files --verbose
+        env:
+          SKIP: no-commit-to-branch
+
+  test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    continue-on-error: true
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        dep-resolution: ["lowest-direct", "highest"]
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          version: 0.7.2
+
+      - name: Patch imports for CI
+        run: |
+          TARGET_FILE="src/mcp/proto/mcp_pb2_grpc.py"
+
+          if [[ -f "$TARGET_FILE" ]]; then
+            echo "Patching imports in $TARGET_FILE"
+            sed -i 's/import mcp_pb2 as mcp__pb2/from . import mcp_pb2 as mcp__pb2/g' "$TARGET_FILE"
+          else
+            echo "Warning: Target file $TARGET_FILE not found."
+          fi
+        shell: bash
+        if: runner.os != 'Windows'
+
+      - name: Patch imports for CI (Windows)
+        run: |
+          $TARGET_FILE = "src/mcp/proto/mcp_pb2_grpc.py"
+          if (Test-Path $TARGET_FILE) {
+            Write-Host "Patching imports in $TARGET_FILE"
+            (Get-Content $TARGET_FILE) -replace 'import mcp_pb2 as mcp__pb2', 'from . import mcp_pb2 as mcp__pb2' | Set-Content $TARGET_FILE
+          } else {
+            Write-Warning "Target file $TARGET_FILE not found."
+          }
+        shell: pwsh
+        if: runner.os == 'Windows'
+
+      - name: Install the project
+        run: uv sync --frozen --all-extras --python ${{ matrix.python-version }} --resolution ${{ matrix.dep-resolution }}
+
+      - name: Run pytest
+        run: uv run --frozen --no-sync pytest
+
+  readme-snippets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          version: 0.7.2
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-extras --python 3.10
+
+      - name: Check README snippets are up to date
+        run: uv run --frozen scripts/update_readme_snippets.py --check
