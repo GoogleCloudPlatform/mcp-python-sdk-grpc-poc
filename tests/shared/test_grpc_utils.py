@@ -47,8 +47,10 @@ async def test_get_protocol_version_from_context_no_version(mock_context):
     """Test aborting when no protocol version is provided in metadata."""
     mock_context.invocation_metadata.return_value = tuple()
     supported_versions = version.SUPPORTED_PROTOCOL_VERSIONS
+    mock_context.abort.side_effect = grpc.RpcError("Aborted")
 
-    await grpc_utils.get_protocol_version_from_context(mock_context, supported_versions)
+    with pytest.raises(grpc.RpcError):
+        await grpc_utils.get_protocol_version_from_context(mock_context, supported_versions)
 
     assert mock_context.send_initial_metadata.call_count == 2
     mock_context.send_initial_metadata.assert_called_with([(grpc_utils.MCP_PROTOCOL_VERSION_KEY, version.LATEST_PROTOCOL_VERSION)])
@@ -61,8 +63,10 @@ async def test_get_protocol_version_from_context_unsupported_version(mock_contex
     """Test aborting when an unsupported protocol version is provided."""
     mock_context.invocation_metadata.return_value = ((grpc_utils.MCP_PROTOCOL_VERSION_KEY, "unsupported"),)
     supported_versions = version.SUPPORTED_PROTOCOL_VERSIONS
+    mock_context.abort.side_effect = grpc.RpcError("Aborted")
 
-    await grpc_utils.get_protocol_version_from_context(mock_context, supported_versions)
+    with pytest.raises(grpc.RpcError):
+        await grpc_utils.get_protocol_version_from_context(mock_context, supported_versions)
 
     mock_context.send_initial_metadata.assert_called_once_with([(grpc_utils.MCP_PROTOCOL_VERSION_KEY, version.LATEST_PROTOCOL_VERSION)])
     mock_context.abort.assert_called_once()
