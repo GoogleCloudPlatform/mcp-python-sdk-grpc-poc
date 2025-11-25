@@ -3,9 +3,9 @@
 import grpc
 import warnings
 
-import mcp_pb2 as mcp__pb2
+from mcp.proto import mcp_pb2 as mcp_dot_proto_dot_mcp__pb2
 
-GRPC_GENERATED_VERSION = '1.75.1'
+GRPC_GENERATED_VERSION = '1.74.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -18,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in mcp_pb2_grpc.py depends on'
+        + f' but the generated code in mcp/proto/mcp_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -39,43 +39,43 @@ class McpStub(object):
         """
         self.ListResources = channel.unary_unary(
                 '/model_context_protocol.Mcp/ListResources',
-                request_serializer=mcp__pb2.ListResourcesRequest.SerializeToString,
-                response_deserializer=mcp__pb2.ListResourcesResponse.FromString,
+                request_serializer=mcp_dot_proto_dot_mcp__pb2.ListResourcesRequest.SerializeToString,
+                response_deserializer=mcp_dot_proto_dot_mcp__pb2.ListResourcesResponse.FromString,
                 _registered_method=True)
         self.ReadResource = channel.unary_unary(
                 '/model_context_protocol.Mcp/ReadResource',
-                request_serializer=mcp__pb2.ReadResourceRequest.SerializeToString,
-                response_deserializer=mcp__pb2.ReadResourceResponse.FromString,
+                request_serializer=mcp_dot_proto_dot_mcp__pb2.ReadResourceRequest.SerializeToString,
+                response_deserializer=mcp_dot_proto_dot_mcp__pb2.ReadResourceResponse.FromString,
                 _registered_method=True)
         self.ListResourceTemplates = channel.unary_unary(
                 '/model_context_protocol.Mcp/ListResourceTemplates',
-                request_serializer=mcp__pb2.ListResourceTemplatesRequest.SerializeToString,
-                response_deserializer=mcp__pb2.ListResourceTemplatesResponse.FromString,
+                request_serializer=mcp_dot_proto_dot_mcp__pb2.ListResourceTemplatesRequest.SerializeToString,
+                response_deserializer=mcp_dot_proto_dot_mcp__pb2.ListResourceTemplatesResponse.FromString,
                 _registered_method=True)
         self.ListPrompts = channel.unary_unary(
                 '/model_context_protocol.Mcp/ListPrompts',
-                request_serializer=mcp__pb2.ListPromptsRequest.SerializeToString,
-                response_deserializer=mcp__pb2.ListPromptsResponse.FromString,
+                request_serializer=mcp_dot_proto_dot_mcp__pb2.ListPromptsRequest.SerializeToString,
+                response_deserializer=mcp_dot_proto_dot_mcp__pb2.ListPromptsResponse.FromString,
                 _registered_method=True)
         self.GetPrompt = channel.unary_unary(
                 '/model_context_protocol.Mcp/GetPrompt',
-                request_serializer=mcp__pb2.GetPromptRequest.SerializeToString,
-                response_deserializer=mcp__pb2.GetPromptResponse.FromString,
+                request_serializer=mcp_dot_proto_dot_mcp__pb2.GetPromptRequest.SerializeToString,
+                response_deserializer=mcp_dot_proto_dot_mcp__pb2.GetPromptResponse.FromString,
                 _registered_method=True)
         self.ListTools = channel.unary_unary(
                 '/model_context_protocol.Mcp/ListTools',
-                request_serializer=mcp__pb2.ListToolsRequest.SerializeToString,
-                response_deserializer=mcp__pb2.ListToolsResponse.FromString,
+                request_serializer=mcp_dot_proto_dot_mcp__pb2.ListToolsRequest.SerializeToString,
+                response_deserializer=mcp_dot_proto_dot_mcp__pb2.ListToolsResponse.FromString,
                 _registered_method=True)
         self.CallTool = channel.stream_stream(
                 '/model_context_protocol.Mcp/CallTool',
-                request_serializer=mcp__pb2.CallToolRequest.SerializeToString,
-                response_deserializer=mcp__pb2.CallToolResponse.FromString,
+                request_serializer=mcp_dot_proto_dot_mcp__pb2.CallToolRequest.SerializeToString,
+                response_deserializer=mcp_dot_proto_dot_mcp__pb2.CallToolResponse.FromString,
                 _registered_method=True)
         self.Complete = channel.unary_unary(
                 '/model_context_protocol.Mcp/Complete',
-                request_serializer=mcp__pb2.CompletionRequest.SerializeToString,
-                response_deserializer=mcp__pb2.CompletionResponse.FromString,
+                request_serializer=mcp_dot_proto_dot_mcp__pb2.CompletionRequest.SerializeToString,
+                response_deserializer=mcp_dot_proto_dot_mcp__pb2.CompletionResponse.FromString,
                 _registered_method=True)
 
 
@@ -171,43 +171,43 @@ def add_McpServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'ListResources': grpc.unary_unary_rpc_method_handler(
                     servicer.ListResources,
-                    request_deserializer=mcp__pb2.ListResourcesRequest.FromString,
-                    response_serializer=mcp__pb2.ListResourcesResponse.SerializeToString,
+                    request_deserializer=mcp_dot_proto_dot_mcp__pb2.ListResourcesRequest.FromString,
+                    response_serializer=mcp_dot_proto_dot_mcp__pb2.ListResourcesResponse.SerializeToString,
             ),
             'ReadResource': grpc.unary_unary_rpc_method_handler(
                     servicer.ReadResource,
-                    request_deserializer=mcp__pb2.ReadResourceRequest.FromString,
-                    response_serializer=mcp__pb2.ReadResourceResponse.SerializeToString,
+                    request_deserializer=mcp_dot_proto_dot_mcp__pb2.ReadResourceRequest.FromString,
+                    response_serializer=mcp_dot_proto_dot_mcp__pb2.ReadResourceResponse.SerializeToString,
             ),
             'ListResourceTemplates': grpc.unary_unary_rpc_method_handler(
                     servicer.ListResourceTemplates,
-                    request_deserializer=mcp__pb2.ListResourceTemplatesRequest.FromString,
-                    response_serializer=mcp__pb2.ListResourceTemplatesResponse.SerializeToString,
+                    request_deserializer=mcp_dot_proto_dot_mcp__pb2.ListResourceTemplatesRequest.FromString,
+                    response_serializer=mcp_dot_proto_dot_mcp__pb2.ListResourceTemplatesResponse.SerializeToString,
             ),
             'ListPrompts': grpc.unary_unary_rpc_method_handler(
                     servicer.ListPrompts,
-                    request_deserializer=mcp__pb2.ListPromptsRequest.FromString,
-                    response_serializer=mcp__pb2.ListPromptsResponse.SerializeToString,
+                    request_deserializer=mcp_dot_proto_dot_mcp__pb2.ListPromptsRequest.FromString,
+                    response_serializer=mcp_dot_proto_dot_mcp__pb2.ListPromptsResponse.SerializeToString,
             ),
             'GetPrompt': grpc.unary_unary_rpc_method_handler(
                     servicer.GetPrompt,
-                    request_deserializer=mcp__pb2.GetPromptRequest.FromString,
-                    response_serializer=mcp__pb2.GetPromptResponse.SerializeToString,
+                    request_deserializer=mcp_dot_proto_dot_mcp__pb2.GetPromptRequest.FromString,
+                    response_serializer=mcp_dot_proto_dot_mcp__pb2.GetPromptResponse.SerializeToString,
             ),
             'ListTools': grpc.unary_unary_rpc_method_handler(
                     servicer.ListTools,
-                    request_deserializer=mcp__pb2.ListToolsRequest.FromString,
-                    response_serializer=mcp__pb2.ListToolsResponse.SerializeToString,
+                    request_deserializer=mcp_dot_proto_dot_mcp__pb2.ListToolsRequest.FromString,
+                    response_serializer=mcp_dot_proto_dot_mcp__pb2.ListToolsResponse.SerializeToString,
             ),
             'CallTool': grpc.stream_stream_rpc_method_handler(
                     servicer.CallTool,
-                    request_deserializer=mcp__pb2.CallToolRequest.FromString,
-                    response_serializer=mcp__pb2.CallToolResponse.SerializeToString,
+                    request_deserializer=mcp_dot_proto_dot_mcp__pb2.CallToolRequest.FromString,
+                    response_serializer=mcp_dot_proto_dot_mcp__pb2.CallToolResponse.SerializeToString,
             ),
             'Complete': grpc.unary_unary_rpc_method_handler(
                     servicer.Complete,
-                    request_deserializer=mcp__pb2.CompletionRequest.FromString,
-                    response_serializer=mcp__pb2.CompletionResponse.SerializeToString,
+                    request_deserializer=mcp_dot_proto_dot_mcp__pb2.CompletionRequest.FromString,
+                    response_serializer=mcp_dot_proto_dot_mcp__pb2.CompletionResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -238,8 +238,8 @@ class Mcp(object):
             request,
             target,
             '/model_context_protocol.Mcp/ListResources',
-            mcp__pb2.ListResourcesRequest.SerializeToString,
-            mcp__pb2.ListResourcesResponse.FromString,
+            mcp_dot_proto_dot_mcp__pb2.ListResourcesRequest.SerializeToString,
+            mcp_dot_proto_dot_mcp__pb2.ListResourcesResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -265,8 +265,8 @@ class Mcp(object):
             request,
             target,
             '/model_context_protocol.Mcp/ReadResource',
-            mcp__pb2.ReadResourceRequest.SerializeToString,
-            mcp__pb2.ReadResourceResponse.FromString,
+            mcp_dot_proto_dot_mcp__pb2.ReadResourceRequest.SerializeToString,
+            mcp_dot_proto_dot_mcp__pb2.ReadResourceResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -292,8 +292,8 @@ class Mcp(object):
             request,
             target,
             '/model_context_protocol.Mcp/ListResourceTemplates',
-            mcp__pb2.ListResourceTemplatesRequest.SerializeToString,
-            mcp__pb2.ListResourceTemplatesResponse.FromString,
+            mcp_dot_proto_dot_mcp__pb2.ListResourceTemplatesRequest.SerializeToString,
+            mcp_dot_proto_dot_mcp__pb2.ListResourceTemplatesResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -319,8 +319,8 @@ class Mcp(object):
             request,
             target,
             '/model_context_protocol.Mcp/ListPrompts',
-            mcp__pb2.ListPromptsRequest.SerializeToString,
-            mcp__pb2.ListPromptsResponse.FromString,
+            mcp_dot_proto_dot_mcp__pb2.ListPromptsRequest.SerializeToString,
+            mcp_dot_proto_dot_mcp__pb2.ListPromptsResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -346,8 +346,8 @@ class Mcp(object):
             request,
             target,
             '/model_context_protocol.Mcp/GetPrompt',
-            mcp__pb2.GetPromptRequest.SerializeToString,
-            mcp__pb2.GetPromptResponse.FromString,
+            mcp_dot_proto_dot_mcp__pb2.GetPromptRequest.SerializeToString,
+            mcp_dot_proto_dot_mcp__pb2.GetPromptResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -373,8 +373,8 @@ class Mcp(object):
             request,
             target,
             '/model_context_protocol.Mcp/ListTools',
-            mcp__pb2.ListToolsRequest.SerializeToString,
-            mcp__pb2.ListToolsResponse.FromString,
+            mcp_dot_proto_dot_mcp__pb2.ListToolsRequest.SerializeToString,
+            mcp_dot_proto_dot_mcp__pb2.ListToolsResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -400,8 +400,8 @@ class Mcp(object):
             request_iterator,
             target,
             '/model_context_protocol.Mcp/CallTool',
-            mcp__pb2.CallToolRequest.SerializeToString,
-            mcp__pb2.CallToolResponse.FromString,
+            mcp_dot_proto_dot_mcp__pb2.CallToolRequest.SerializeToString,
+            mcp_dot_proto_dot_mcp__pb2.CallToolResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -427,8 +427,8 @@ class Mcp(object):
             request,
             target,
             '/model_context_protocol.Mcp/Complete',
-            mcp__pb2.CompletionRequest.SerializeToString,
-            mcp__pb2.CompletionResponse.FromString,
+            mcp_dot_proto_dot_mcp__pb2.CompletionRequest.SerializeToString,
+            mcp_dot_proto_dot_mcp__pb2.CompletionResponse.FromString,
             options,
             channel_credentials,
             insecure,

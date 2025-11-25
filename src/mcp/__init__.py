@@ -1,8 +1,3 @@
-import sys
-import os
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "proto"))
-
 from .client.transport_session import TransportSession
 from .client.session import ClientSession
 from .client.grpc_transport_session import GRPCTransportSession
