@@ -1,10 +1,8 @@
 from datetime import timedelta
+from collections.abc import AsyncGenerator
 import logging
 import asyncio
 import base64
-import uuid
-import base64
-import time
 
 import grpc
 from grpc import aio
@@ -12,8 +10,6 @@ from google.protobuf import json_format
 
 from mcp import types
 from mcp.client import session_common
-from jsonschema import ValidationError, SchemaError
-from jsonschema.validators import validate
 
 from mcp import types
 from mcp.client.cache import CacheEntry
@@ -22,7 +18,6 @@ from mcp.client.session_common import ListRootsFnT
 from mcp.client.session_common import LoggingFnT
 from mcp.client.session_common import MessageHandlerFnT
 from mcp.client.session_common import SamplingFnT
-from mcp.client.session_common import _validate_tool_result
 from mcp.client.transport_session import TransportSession
 from mcp.proto import mcp_pb2
 from mcp.proto import mcp_pb2_grpc
@@ -31,8 +26,7 @@ from mcp.shared import grpc_utils
 from mcp.shared.exceptions import McpError
 from mcp.shared import version
 
-from typing import Any, Sequence, Optional, Tuple, cast
-from typing import Any
+from typing import Any, cast, Sequence, Optional, Tuple
 
 from mcp.shared.session import ProgressFnT
 from mcp.types import ErrorData
@@ -70,11 +64,6 @@ class GRPCTransportSession(TransportSession):
           channel = aio.secure_channel(target, channel_credential, options=options, compression=compression, interceptors=interceptors)
       else:
           channel = aio.insecure_channel(target, options=options, compression=compression, interceptors=interceptors)
-
-      if channel_credential is not None:
-          channel = aio.secure_channel(target, channel_credential, **kwargs)
-      else:
-          channel = aio.insecure_channel(target, **kwargs)
 
       stub = mcp_pb2_grpc.McpStub(channel)
       self._grpc_stub = stub
@@ -432,13 +421,13 @@ class GRPCTransportSession(TransportSession):
 
         for attempt in range(1, 3):
             proto_results: list[mcp_pb2.CallToolResponse.Content] = []
-            structured_content = None
+            structured_content: dict[str, Any] | None = None
             is_error: bool = False
             timeout_td: timedelta | None = None
             try:
-                request_iterator = convert.generate_call_tool_requests(
+                request_iterator = cast(AsyncGenerator[mcp_pb2.CallToolRequest, None], convert.generate_call_tool_requests(  # type: ignore[attr-defined]
                     self.request_generator(name, request_id, arguments)
-                )
+                ))
                 # read_timeout_seconds takes precedence over session timeout
                 timeout_td: timedelta | None = (
                     read_timeout_seconds or self._session_read_timeout_seconds
@@ -492,7 +481,7 @@ class GRPCTransportSession(TransportSession):
                 # Clean up the running call and progress callback after the call is complete.
                 self._running_calls.pop(request_id, None)
                 self._progress_callbacks.pop(request_id, None)
-                return await self._validate_and_return_result(name, final_result)
+                return await self._validate_and_return_result(name, cast(types.CallToolResult, final_result))
 
             except asyncio.CancelledError as e:
                 # Clean up the running call and progress callback on cancellation.
