@@ -53,9 +53,8 @@ async def test_get_protocol_version_from_context_no_version(mock_context):
         await grpc_utils.get_protocol_version_from_context(mock_context, supported_versions)
 
     mock_context.send_initial_metadata.assert_called_once_with([(grpc_utils.MCP_PROTOCOL_VERSION_KEY, version.LATEST_PROTOCOL_VERSION)])
-    mock_context.abort.assert_called_once()
-    args, kwargs = mock_context.abort.call_args
-    assert args[0] == grpc.StatusCode.UNIMPLEMENTED
+    mock_context.abort.assert_called_once_with(grpc.StatusCode.UNIMPLEMENTED,
+                                               "Protocol version not provided. Supported versions are: 2024-11-05, 2025-03-26, 2025-06-18")
 
 @pytest.mark.asyncio
 async def test_get_protocol_version_from_context_unsupported_version(mock_context):
@@ -68,9 +67,8 @@ async def test_get_protocol_version_from_context_unsupported_version(mock_contex
         await grpc_utils.get_protocol_version_from_context(mock_context, supported_versions)
 
     mock_context.send_initial_metadata.assert_called_once_with([(grpc_utils.MCP_PROTOCOL_VERSION_KEY, version.LATEST_PROTOCOL_VERSION)])
-    mock_context.abort.assert_called_once()
-    args, kwargs = mock_context.abort.call_args
-    assert args[0] == grpc.StatusCode.UNIMPLEMENTED
+    mock_context.abort.assert_called_once_with(grpc.StatusCode.UNIMPLEMENTED,
+                                               "Unsupported protocol version: unsupported. Supported versions are: 2024-11-05, 2025-03-26, 2025-06-18")
 
 @pytest.mark.asyncio
 async def test_get_protocol_version_from_context_supported_version(mock_context):
