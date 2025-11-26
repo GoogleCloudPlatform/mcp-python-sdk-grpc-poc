@@ -66,7 +66,7 @@ class GRPCTransportSession(TransportSession):
           channel = aio.insecure_channel(target, options=options, compression=compression, interceptors=interceptors)
 
       stub = mcp_pb2_grpc.McpStub(channel)
-      self._grpc_stub = stub
+      self.grpc_stub = stub
       self._channel = channel
       self._request_counter = 0
       self._progress_callbacks: dict[str | int, ProgressFnT] = {}
@@ -256,7 +256,7 @@ class GRPCTransportSession(TransportSession):
               else None
           )
           response = await self._call_unary_rpc(
-              self._grpc_stub.ListResources, request, timeout # type: ignore[attr-defined]
+              self.grpc_stub.ListResources, request, timeout # type: ignore[attr-defined]
           )
           resources = convert.resource_protos_to_types(list(response.resources))
           resources_dict = {resource.name: resource for resource in resources}
@@ -295,7 +295,7 @@ class GRPCTransportSession(TransportSession):
                 else None
             )
             response = await self._call_unary_rpc(
-                self._grpc_stub.ListResourceTemplates, request, timeout # type: ignore[attr-defined]
+                self.grpc_stub.ListResourceTemplates, request, timeout # type: ignore[attr-defined]
             )
             resource_templates = convert.resource_template_protos_to_types(
                 list(response.resource_templates)
@@ -342,7 +342,7 @@ class GRPCTransportSession(TransportSession):
             )
             metadata = [(grpc_utils.MCP_RESOURCE_URI_KEY, str(uri))]
             response = await self._call_unary_rpc(
-                self._grpc_stub.ReadResource, request, timeout, metadata=metadata # type: ignore[attr-defined]
+                self.grpc_stub.ReadResource, request, timeout, metadata=metadata # type: ignore[attr-defined]
             )
             resource_contents_list = response.resource
             contents: list[types.TextResourceContents | types.BlobResourceContents] = []
@@ -437,7 +437,7 @@ class GRPCTransportSession(TransportSession):
                     (grpc_utils.MCP_TOOL_NAME_KEY, name),
                     (grpc_utils.MCP_PROTOCOL_VERSION_KEY, self.negotiated_version)
                 ]
-                call = self._grpc_stub.CallTool( # type: ignore[attr-defined]
+                call = self.grpc_stub.CallTool( # type: ignore[attr-defined]
                     request_iterator,
                     timeout=timeout,
                     metadata=metadata,
@@ -638,7 +638,7 @@ class GRPCTransportSession(TransportSession):
                 else None
             )
             response = await self._call_unary_rpc(
-                self._grpc_stub.ListTools, request, timeout # type: ignore[attr-defined]
+                self.grpc_stub.ListTools, request, timeout # type: ignore[attr-defined]
             )
 
             # Convert gRPC response to ListToolsResult
