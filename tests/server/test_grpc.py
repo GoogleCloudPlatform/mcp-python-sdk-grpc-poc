@@ -1,12 +1,8 @@
 import asyncio
 import socket
 from collections.abc import AsyncGenerator
-import json
 
 from typing import cast
-from collections.abc import Generator
-import json
-import os
 from pathlib import Path
 import unittest.mock
 
@@ -20,8 +16,8 @@ import pytest
 from pydantic import BaseModel
 from google.protobuf import json_format
 from google.protobuf import struct_pb2
-from mcp import types
 from mcp.client.grpc_transport_session import GRPCTransportSession
+from typing import List
 from mcp.proto import mcp_pb2, mcp_pb2_grpc
 from mcp.server.fastmcp.server import FastMCP
 from mcp.server.grpc import create_mcp_grpc_server
@@ -328,12 +324,12 @@ async def test_list_resources_grpc(grpc_server: None, grpc_stub: mcp_pb2_grpc.Mc
     """Test ListResources via gRPC."""
     metadata = [("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION)]
     request = mcp_pb2.ListResourcesRequest()
-    response = await grpc_stub.ListResources(request, metadata=metadata)
+    response: mcp_pb2.ListResourcesResponse = await grpc_stub.ListResources(request, metadata=metadata)
 
     assert response is not None
     assert len(response.resources) == 6
 
-    resources = {r.name: r for r in response.resources}
+    resources = {r.name: r for r in cast(List[mcp_pb2.Resource], response.resources)}
     assert "test_resource" in resources
     assert resources["test_resource"].uri == "test://data"
     assert "binary_resource" in resources
@@ -357,12 +353,12 @@ async def test_list_resource_templates_grpc(
         common=mcp_pb2.RequestFields()
     )
     metadata = [("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION)]
-    response = await grpc_stub.ListResourceTemplates(request, metadata=metadata)  # type: ignore[attr-defined]
+    response: mcp_pb2.ListResourceTemplatesResponse = await grpc_stub.ListResourceTemplates(request, metadata=metadata) # type: ignore[attr-defined]
 
     assert response is not None
-    assert len(response.resource_templates) == 2  # type: ignore[attr-defined]
+    assert len(response.resource_templates) == 2 # type: ignore[arg-type]
 
-    templates = {r.name: r for r in response.resource_templates}  # type: ignore[attr-defined]
+    templates = {r.name: r for r in response.resource_templates} # type: ignore[attr-defined]
     assert "template_resource" in templates
     assert templates["template_resource"].uri_template == "test://template/{name}"  # type: ignore[attr-defined]
     assert templates["template_resource"].mime_type == "text/plain"  # type: ignore[attr-defined]
@@ -379,10 +375,10 @@ async def test_list_resources_grpc_binary(grpc_server: None, grpc_stub: mcp_pb2_
     """Test ListResources via gRPC for binary resource."""
     request = mcp_pb2.ListResourcesRequest()
     metadata = [("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION)]
-    response = await grpc_stub.ListResources(request, metadata=metadata)  # type: ignore[attr-defined]
+    response: mcp_pb2.ListResourcesResponse = await grpc_stub.ListResources(request, metadata=metadata) # type: ignore[attr-defined]
 
     assert response is not None
-    resources = {r.name: r for r in response.resources}  # type: ignore[attr-defined]
+    resources = {r.name: r for r in response.resources} # type: ignore[attr-defined]
     assert "binary_resource" in resources
     resource = resources["binary_resource"]  # type: ignore[attr-defined]
     assert resource.uri == "test://binary_resource"  # type: ignore[attr-defined]
@@ -396,12 +392,12 @@ async def test_list_tools_grpc(grpc_server: None, grpc_stub: mcp_pb2_grpc.McpStu
         common=mcp_pb2.RequestFields()
     )
     metadata = [("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION)]
-    response = await grpc_stub.ListTools(request, metadata=metadata)  # type: ignore[attr-defined]
+    response: mcp_pb2.ListToolsResponse = await grpc_stub.ListTools(request, metadata=metadata) # type: ignore[attr-defined]
 
     assert response is not None
-    assert len(response.tools) == 7  # type: ignore[attr-defined]
+    assert len(response.tools) == 7 # type: ignore[arg-type]
 
-    tools_by_name = {tool.name: tool for tool in response.tools}  # type: ignore[attr-defined]
+    tools_by_name = {tool.name: tool for tool in response.tools} # type: ignore[attr-defined]
 
     expected_tools = {  # type: ignore
         "greet": {
@@ -712,10 +708,10 @@ async def test_read_resource_grpc(grpc_server: None, grpc_stub: mcp_pb2_grpc.Mcp
         uri="test://data",
     )
     metadata = [("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION)]
-    response = await grpc_stub.ReadResource(request, metadata=metadata)  # type: ignore[attr-defined]
+    response: mcp_pb2.ReadResourceResponse = await grpc_stub.ReadResource(request, metadata=metadata) # type: ignore[attr-defined]
 
     assert response is not None
-    assert response.resource[0].text == "resource data"  # type: ignore[attr-defined]
+    assert cast(List[mcp_pb2.ResourceContents], response.resource)[0].text == "resource data" # type: ignore[attr-defined]
     assert response.resource[0].mime_type == "text/plain"  # type: ignore[attr-defined]
 
     request = mcp_pb2.ReadResourceRequest(

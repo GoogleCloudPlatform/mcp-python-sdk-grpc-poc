@@ -5,7 +5,7 @@ import pytest
 
 import mcp.types as types
 from mcp.client.session import DEFAULT_CLIENT_INFO, ClientSession
-from mcp.client.session import DEFAULT_CLIENT_INFO, ClientSession, TransportSession
+from mcp.client.session import DEFAULT_CLIENT_INFO, ClientSession
 from mcp.shared.context import RequestContext
 from mcp.shared.message import SessionMessage
 from mcp.shared.session import RequestResponder
