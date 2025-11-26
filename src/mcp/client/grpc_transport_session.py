@@ -481,7 +481,7 @@ class GRPCTransportSession(TransportSession):
                 # Clean up the running call and progress callback after the call is complete.
                 self._running_calls.pop(request_id, None)
                 self._progress_callbacks.pop(request_id, None)
-                return await self._validate_and_return_result(name, cast(types.CallToolResult, final_result))
+                return await self._validate_and_return_result(name, final_result)
 
             except asyncio.CancelledError as e:
                 # Clean up the running call and progress callback on cancellation.

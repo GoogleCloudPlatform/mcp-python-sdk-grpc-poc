@@ -11,16 +11,9 @@ from mcp.shared import version
 
 from mcp.client.grpc_transport_session import GRPCTransportSession
 from mcp.client.cache import CacheEntry
-import time
-import unittest.mock
-
-from mcp.proto import mcp_pb2, mcp_pb2_grpc
-from mcp.shared import version
-from google.protobuf import struct_pb2
 
 from mcp.client.grpc_transport_session import GRPCTransportSession
 from mcp.client.cache import CacheEntry
-from mcp.client import session_common
 from mcp.shared.exceptions import McpError
 from mcp import types
 
@@ -30,15 +23,9 @@ from typing import AsyncGenerator
 from mcp.server.fastmcp.server import FastMCP
 from mcp.server.grpc import create_mcp_grpc_server
 from pydantic import AnyUrl
-from collections.abc import Generator
-from mcp.server.fastmcp.server import Context, FastMCP
+from mcp.server.fastmcp.server import FastMCP
 from mcp.server.grpc import create_mcp_grpc_server
 from mcp import types
-from io import BytesIO
-from PIL import Image as PILImage
-import base64
-from pydantic import BaseModel
-from jsonschema import ValidationError
 
 
 def setup_test_server(port: int) -> FastMCP:
