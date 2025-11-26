@@ -21,7 +21,6 @@ from typing_extensions import Self
 
 import mcp
 from mcp import types
-from mcp.client.session import TransportSession
 from mcp.client.sse import sse_client
 from mcp.client.stdio import StdioServerParameters
 from mcp.client.streamable_http import streamablehttp_client

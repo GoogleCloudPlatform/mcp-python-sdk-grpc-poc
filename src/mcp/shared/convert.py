@@ -9,7 +9,6 @@ from typing import Any, Sequence, cast, Iterable, TypeAlias
 
 import jsonschema
 from google.protobuf import json_format
-from google.protobuf.message import Message
 from mcp.server.lowlevel.helper_types import ReadResourceContents
 
 from mcp import types
@@ -301,7 +300,7 @@ def _populate_content_from_content_block(
           resource_contents.blob
       )
       return True
-  elif isinstance(content_block, types.ResourceLink):
+  else:  # types.ResourceLink
     result.resource_link.uri = str(content_block.uri)
     if content_block.name:
       result.resource_link.name = content_block.name
@@ -312,7 +311,6 @@ def _populate_content_from_content_block(
 def unstructured_tool_output_to_proto(
     tool_output: Sequence[types.ContentBlock],
 ) -> list[mcp_pb2.CallToolResponse.Content]:
->>>>>>> grpc-transport
   """Converts unstructured tool output to a list of CallToolResponse protos."""
   logger.info("unstructured_tool_output_to_proto: tool_output=%s", tool_output)
   if not tool_output:

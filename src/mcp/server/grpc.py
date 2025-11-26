@@ -21,10 +21,10 @@ from mcp.proto import mcp_pb2_grpc
 from mcp.server.grpc_session import GrpcSession
 from mcp.server.lowlevel.server import RequestContext
 from mcp.shared import convert
+from mcp.shared.convert import normalize_and_validate_tool_results, ToolOutputValidationError, UnstructuredContent, StructuredContent  # type: ignore
 from mcp.shared import grpc_utils
 if TYPE_CHECKING:
     from mcp.server.fastmcp.server import FastMCP
-from mcp.shared import version
 
 
 logger = logging.getLogger(__name__)
@@ -33,10 +33,7 @@ logger = logging.getLogger(__name__)
 class McpServicer(mcp_pb2_grpc.McpServicer):
   """gRPC servicer for MCP protocol."""
 
-  def __init__(self, mcp_server: FastMCP):
-    self.mcp_server: FastMCP = mcp_server
-
-  def __init__(self, mcp_server):
+  def __init__(self, mcp_server: "FastMCP"):
     self.mcp_server = mcp_server
     # TODO(asheshvidyut): Make this a configurable parameter.
     self.list_resources_ttl: timedelta = timedelta(minutes=60)
@@ -223,12 +220,14 @@ class McpServicer(mcp_pb2_grpc.McpServicer):
       )
 
       try:
-        unstructured_content, maybe_structured_content = (
-            convert.normalize_and_validate_tool_results(results, tool)
+        unstructured_content: UnstructuredContent | None
+        maybe_structured_content: StructuredContent | None
+        unstructured_content, maybe_structured_content = (  # type: ignore
+            convert.normalize_and_validate_tool_results(results, tool)  # type: ignore
         )
-      except convert.ToolOutputValidationError as e:
+      except convert.ToolOutputValidationError as e:  # type: ignore
         await self._make_error_result(
-            response_queue, str(e)
+            response_queue, str(e)  # type: ignore
         )
         return
 
@@ -238,7 +237,7 @@ class McpServicer(mcp_pb2_grpc.McpServicer):
       if unstructured_content:
         call_tool_response.content.extend(
             convert.unstructured_tool_output_to_proto(
-                list(unstructured_content)
+                list(unstructured_content)  # type: ignore
             )
         )
       if maybe_structured_content:
