@@ -56,7 +56,7 @@ def test_timedelta_from_ttl():
 def test_resource_type_to_proto_valid():
   """Test conversion of a valid types.Resource to a proto message."""
   resource_type = types.Resource(
-      uri=types.AnyUrl("test://resource"),
+      uri="test://resource",
       name="test_resource",
       title="Test Resource",
       description="A test resource",
@@ -82,7 +82,7 @@ def test_resource_types_to_protos():
   """Test conversion of a list of types.Resource objects."""
   resource_types = [
       types.Resource(
-          uri=types.AnyUrl("test://resource1"),
+          uri="test://resource1",
           name="resource1",
           title="Resource 1",
           description="Resource 1",
@@ -90,7 +90,7 @@ def test_resource_types_to_protos():
           size=100,
       ),
       types.Resource(
-          uri=types.AnyUrl("test://resource2"),
+          uri="test://resource2",
           name="resource2",
           title="Resource 2",
           description="Resource 2",
@@ -134,7 +134,7 @@ def test_resource_proto_to_type():
         annotations=mcp_pb2.Annotations(audience=[mcp_pb2.ROLE_USER], priority=0.5),
     )
     expected_resource_type = types.Resource(
-        uri=types.AnyUrl("test://resource"),
+        uri="test://resource",
         name="test_resource",
         title="Test Resource",
         description="A test resource",
@@ -169,7 +169,7 @@ def test_resource_protos_to_types():
     ]
     expected_types = [
         types.Resource(
-            uri=types.AnyUrl("test://resource1"),
+            uri="test://resource1",
             name="resource1",
             title="Resource 1",
             description="Resource 1",
@@ -177,7 +177,7 @@ def test_resource_protos_to_types():
             size=100,
         ),
         types.Resource(
-            uri=types.AnyUrl("test://resource2"),
+            uri="test://resource2",
             name="resource2",
             title="Resource 2",
             description="Resource 2",
@@ -327,10 +327,8 @@ def test_resource_template_protos_to_types():
     assert converted_types == expected_types
 
 
-from mcp.server.lowlevel.helper_types import ReadResourceContents
-
-class MockReadResourceContents(ReadResourceContents):
-    def __init__(self, content: str | bytes, mime_type: str | None = None):
+class MockReadResourceContents:
+    def __init__(self, content, mime_type):
         self.content = content
         self.mime_type = mime_type
 
@@ -585,7 +583,7 @@ def test_tool_output_to_proto_embedded_text_resource_object():
   tool_output = types.EmbeddedResource(
       type="resource",
       resource=types.TextResourceContents(
-          uri=types.AnyUrl("test://resource"), mimeType="text/plain", text="hello"
+          uri="test://resource", mimeType="text/plain", text="hello"
       ),
   )
   converted_proto = convert.unstructured_tool_output_to_proto([tool_output])
@@ -600,7 +598,7 @@ def test_tool_output_to_proto_embedded_blob_resource_object():
   tool_output = types.EmbeddedResource(
       type="resource",
       resource=types.BlobResourceContents(
-          uri=types.AnyUrl("test://resource"), mimeType="app/foo", blob="aGVsbG8="
+          uri="test://resource", mimeType="app/foo", blob="aGVsbG8="
       ),
   )
   converted_proto = convert.unstructured_tool_output_to_proto([tool_output])
@@ -615,7 +613,7 @@ def test_tool_output_to_proto_embedded_blob_resource_object():
 
 def test_tool_output_to_proto_resource_link_object():
   """Test conversion of tool output as a ResourceLink object."""
-  tool_output = types.ResourceLink(type="resource_link", name="", uri=types.AnyUrl("test://link"))
+  tool_output = types.ResourceLink(type="resource_link", name="", uri="test://link")
   converted_proto = convert.unstructured_tool_output_to_proto([tool_output])
   assert len(converted_proto) == 1
   assert converted_proto[0].resource_link.uri == "test://link"
@@ -627,11 +625,11 @@ def test_tool_output_to_proto_list_of_content_blocks():
         types.TextContent(type="text", text="hello"),
         types.ImageContent(type="image", data="aGVsbG8=", mimeType="image/png"),
         types.AudioContent(type="audio", data="YXVkaW8=", mimeType="audio/mpeg"),
-        types.ResourceLink(type="resource_link", name="link", uri=types.AnyUrl("test://link")),
+        types.ResourceLink(type="resource_link", name="link", uri="test://link"),
         types.EmbeddedResource(
             type="resource",
             resource=types.TextResourceContents(
-                uri=types.AnyUrl("test://resource"), mimeType="text/plain", text="resource"
+                uri="test://resource", mimeType="text/plain", text="resource"
             ),
         ),
     ]
@@ -651,21 +649,23 @@ def test_tool_output_to_proto_list_of_content_blocks():
 
 def test_tool_output_to_proto_none():
   """Test conversion of tool output as None."""
-  converted_proto = convert.unstructured_tool_output_to_proto([])
+  tool_output = None
+  converted_proto = convert.unstructured_tool_output_to_proto(tool_output)
   assert converted_proto == []
 
 
-def test_tool_output_to_proto_invalid_block_type():
-  """Test tool_output_to_proto with an invalid content block type."""
-  tool_output = MockInvalidContentBlock()
-  result = convert.unstructured_tool_output_to_proto([tool_output])  # type: ignore[arg-type]
-  assert len(result) == 0
+
 
 
 class MockInvalidContentBlock:
   def __str__(self):
     return "MockInvalidContentBlock()"
 
+def test_tool_output_to_proto_invalid_block_type():
+  """Test tool_output_to_proto with an invalid content block type."""
+  tool_output = MockInvalidContentBlock()
+  result = convert.unstructured_tool_output_to_proto([tool_output])
+  assert len(result) == 0
 
 
 def test_normalize_and_validate_tool_results_invalid_type():
@@ -746,7 +746,7 @@ def test_proto_result_to_content_embedded_resource_text():
   assert types_result.content[0].type == "resource"
   assert str(types_result.content[0].resource.uri) == "test://resource"
   assert types_result.content[0].resource.mimeType == "text/plain"
-  assert types_result.content[0].resource.text == "hello"  # type: ignore[attr-defined]
+  assert types_result.content[0].resource.text == "hello"
   assert types_result.structuredContent is None
   assert types_result.isError is False
 
@@ -761,7 +761,7 @@ def test_proto_result_to_content_embedded_resource_blob():
   assert types_result.content[0].type == "resource"
   assert str(types_result.content[0].resource.uri) == "test://resource"
   assert types_result.content[0].resource.mimeType == "application/octet-stream"
-  assert types_result.content[0].resource.blob == "YmxvYg=="  # type: ignore[attr-defined]
+  assert types_result.content[0].resource.blob == "YmxvYg=="
   assert types_result.structuredContent is None
   assert types_result.isError is False
 
@@ -773,7 +773,7 @@ def test_proto_result_to_content_resource_link():
   proto_result.resource_link.name = "Test Link"
   types_result = convert.proto_result_to_content([proto_result])
   assert types_result.content == [
-      types.ResourceLink(type="resource_link", uri=types.AnyUrl("test://link"), name="Test Link")
+      types.ResourceLink(type="resource_link", uri="test://link", name="Test Link")
   ]
   assert types_result.structuredContent is None
   assert types_result.isError is False
@@ -785,7 +785,7 @@ def test_proto_result_to_content_resource_link_no_name():
   proto_result.resource_link.uri = "test://link"
   types_result = convert.proto_result_to_content([proto_result])
   assert types_result.content == [
-      types.ResourceLink(type="resource_link", uri=types.AnyUrl("test://link"), name="")
+      types.ResourceLink(type="resource_link", uri="test://link", name="")
   ]
   assert types_result.structuredContent is None
   assert types_result.isError is False

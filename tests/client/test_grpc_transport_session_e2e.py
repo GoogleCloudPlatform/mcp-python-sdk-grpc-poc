@@ -116,7 +116,7 @@ def setup_test_server(port: int) -> FastMCP:
       )
 
     @mcp.tool()
-    def get_untyped_object() -> dict[str, str]:
+    def get_untyped_object() -> dict: # type: ignore
         class UntypedObject:
             def __str__(self):
                 return "UntypedObject()"
@@ -241,7 +241,7 @@ async def test_list_resource_templates_grpc_transport(
         }
         assert "template_resource" in templates
         assert (
-            unquote(str(templates["template_resource"].uriTemplate))
+            unquote(templates["template_resource"].uriTemplate)
             == "test://template/{name}"
         )
         assert templates["template_resource"].mimeType == "text/plain"
@@ -534,7 +534,7 @@ async def test_list_tools_grpc_transport_failure(server_port: int):
         (
             "get_untyped_object",
             {},
-            [{"type": "text", "text": json.dumps({"result": "UntypedObject()"})}],
+            [{"type": "text", "text": json.dumps({"result": "UntypedObject()"}, indent=2)}],
             None,
         ),
         (
