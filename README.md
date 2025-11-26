@@ -47,14 +47,14 @@ The following documentation files have been added to the `docs` folder:
 
 The major new files introduced for gRPC transport are:
 
-*   `mcp_grpc/server/grpc.py`: Contains the gRPC server implementation.
-*   `mcp_grpc/client/grpc_transport_session.py`: Contains the gRPC client transport session.
+*   `mcp/server/grpc.py`: Contains the gRPC server implementation.
+*   `mcp/client/grpc_transport_session.py`: Contains the gRPC client transport session.
 
 ### Other New Files
 
-*   `mcp_grpc/utils/convert.py`: Provides utility functions for converting between different data formats.
-*   `mcp_grpc/utils/grpc_utils.py`: Contains gRPC-specific utility functions.
-*   `mcp_grpc/server/grpc_session.py`: Defines the session object for gRPC tool calls.
+*   `mcp/utils/convert.py`: Provides utility functions for converting between different data formats.
+*   `mcp/utils/grpc_utils.py`: Contains gRPC-specific utility functions.
+*   `mcp/server/grpc_session.py`: Defines the session object for gRPC tool calls.
 *   `examples/`: This directory contains example implementations for both gRPC and HTTP transports, including server and client examples.
 
 ## Protocol Definition
@@ -72,7 +72,7 @@ The gRPC server implementation uses the `grpc.aio` stack.
 #### gRPC Server
 
 ```python
-from mcp_grpc.server.fastmcp.server import FastMCP
+from mcp.server.fastmcp.server import FastMCP
 
 mcp = FastMCP()
 @mcp.tool()
@@ -95,7 +95,7 @@ All options that a `grpc.aio.Server` takes can be given to the `FastMCP` server 
 #### HTTP Server
 
 ```python
-from mcp_grpc.server.fastmcp.server import FastMCP
+from mcp.server.fastmcp.server import FastMCP
 
 mcp = FastMCP()
 @mcp.tool()
@@ -115,7 +115,7 @@ but the transport session objects used are different.
 ```python
 import asyncio
 import grpc
-from mcp_grpc.transport.grpc_transport_session import GRPCTransportSession
+from mcp.transport.grpc_transport_session import GRPCTransportSession
 
 async def main(host="localhost", port=50051):
     credentials = grpc.local_channel_credentials()
@@ -136,8 +136,8 @@ if __name__ == "__main__":
 
 ```python
 from datetime import timedelta
-from mcp_grpc.client.session import ClientSession
-from mcp_grpc.client.streamable_http import streamablehttp_client
+from mcp.client.session import ClientSession
+from mcp.client.streamable_http import streamablehttp_client
 
 async def main():
     async with streamablehttp_client(
