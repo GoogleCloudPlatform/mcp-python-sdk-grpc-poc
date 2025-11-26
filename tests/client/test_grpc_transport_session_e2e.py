@@ -1,5 +1,6 @@
 import asyncio
 import socket
+from collections.abc import Generator
 import base64
 import json
 from io import BytesIO

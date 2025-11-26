@@ -655,11 +655,6 @@ def test_tool_output_to_proto_none():
   assert converted_proto == []
 
 
-
-
-
-
-
 def test_tool_output_to_proto_invalid_block_type():
   """Test tool_output_to_proto with an invalid content block type."""
   tool_output = MockInvalidContentBlock()
@@ -670,7 +665,6 @@ def test_tool_output_to_proto_invalid_block_type():
 class MockInvalidContentBlock:
   def __str__(self):
     return "MockInvalidContentBlock()"
-
 
 
 

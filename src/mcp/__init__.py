@@ -1,5 +1,3 @@
-# TODO(asheshvidyut): Add build from source support using `pip install .`
-
 from .client.transport_session import TransportSession
 from .client.session import ClientSession
 from .client.grpc_transport_session import GRPCTransportSession

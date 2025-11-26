@@ -4,6 +4,9 @@ from collections.abc import AsyncGenerator
 import json
 
 from typing import cast
+from collections.abc import Generator
+import json
+import os
 from pathlib import Path
 import unittest.mock
 
@@ -12,6 +15,12 @@ import pytest
 from pydantic import BaseModel, AnyUrl
 from google.protobuf import json_format
 from google.protobuf import struct_pb2
+import os
+import pytest
+from pydantic import BaseModel
+from google.protobuf import json_format
+from google.protobuf import struct_pb2
+from mcp import types
 from mcp.client.grpc_transport_session import GRPCTransportSession
 from mcp.proto import mcp_pb2, mcp_pb2_grpc
 from mcp.server.fastmcp.server import FastMCP
@@ -319,24 +328,24 @@ async def test_list_resources_grpc(grpc_server: None, grpc_stub: mcp_pb2_grpc.Mc
     """Test ListResources via gRPC."""
     metadata = [("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION)]
     request = mcp_pb2.ListResourcesRequest()
-    response = await grpc_stub.ListResources(request, metadata=metadata)  # type: ignore[attr-defined]
+    response = await grpc_stub.ListResources(request, metadata=metadata)
 
     assert response is not None
-    assert len(response.resources) == 6  # type: ignore[attr-defined]
+    assert len(response.resources) == 6
 
-    resources = {r.name: r for r in response.resources}  # type: ignore[attr-defined]
+    resources = {r.name: r for r in response.resources}
     assert "test_resource" in resources
-    assert resources["test_resource"].uri == "test://data"  # type: ignore[attr-defined]
+    assert resources["test_resource"].uri == "test://data"
     assert "binary_resource" in resources
-    assert resources["binary_resource"].uri == "test://binary_resource"  # type: ignore[attr-defined]
+    assert resources["binary_resource"].uri == "test://binary_resource"
     assert "empty_resource" in resources
-    assert resources["empty_resource"].uri == "test://empty_resource"  # type: ignore[attr-defined]
+    assert resources["empty_resource"].uri == "test://empty_resource"
     assert "read_example_py" in resources
-    assert resources["read_example_py"].uri == "file://test_dir/example.py"  # type: ignore[attr-defined]
+    assert resources["read_example_py"].uri == "file://test_dir/example.py"
     assert "read_readme_md" in resources
-    assert resources["read_readme_md"].uri == "file://test_dir/readme.md"  # type: ignore[attr-defined]
+    assert resources["read_readme_md"].uri == "file://test_dir/readme.md"
     assert "read_config_json" in resources
-    assert resources["read_config_json"].uri == "file://test_dir/config.json"  # type: ignore[attr-defined]
+    assert resources["read_config_json"].uri == "file://test_dir/config.json"
 
 
 @pytest.mark.anyio
@@ -752,7 +761,7 @@ async def test_read_resource_not_found_grpc(grpc_server: None, grpc_stub: mcp_pb
     )
     metadata = [("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION)]
     with pytest.raises(grpc.aio.AioRpcError) as excinfo:
-            await grpc_stub.ReadResource(request, metadata=metadata)  # type: ignore[attr-defined]
+        await grpc_stub.ReadResource(request, metadata=metadata)  # type: ignore[attr-defined]
 
     assert excinfo.value.code() == grpc.StatusCode.NOT_FOUND
 

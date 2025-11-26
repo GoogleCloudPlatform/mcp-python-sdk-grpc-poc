@@ -8,6 +8,7 @@ import asyncio
 import logging
 from typing import AsyncIterator, TYPE_CHECKING, cast
 from mcp.server.lowlevel.server import ServerSession
+from typing import AsyncIterator
 from datetime import timedelta
 
 from google.protobuf import json_format
@@ -23,6 +24,7 @@ from mcp.shared import convert
 from mcp.shared import grpc_utils
 if TYPE_CHECKING:
     from mcp.server.fastmcp.server import FastMCP
+from mcp.shared import version
 
 
 logger = logging.getLogger(__name__)
@@ -33,6 +35,9 @@ class McpServicer(mcp_pb2_grpc.McpServicer):
 
   def __init__(self, mcp_server: FastMCP):
     self.mcp_server: FastMCP = mcp_server
+
+  def __init__(self, mcp_server):
+    self.mcp_server = mcp_server
     # TODO(asheshvidyut): Make this a configurable parameter.
     self.list_resources_ttl: timedelta = timedelta(minutes=60)
     self.list_resource_templates_ttl: timedelta = timedelta(minutes=60)

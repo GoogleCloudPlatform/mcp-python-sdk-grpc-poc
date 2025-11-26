@@ -15,7 +15,6 @@ from mcp.shared.memory import create_connected_server_and_client_session
 from mcp.types import ElicitRequestParams, ElicitResult, TextContent
 
 
-
 # Shared schema for basic tests
 class AnswerSchema(BaseModel):
     answer: str = Field(description="The user's answer to the question")
@@ -185,7 +184,6 @@ async def test_elicitation_with_optional_fields():
     ]
 
     for content, expected in test_cases:
-
         async def callback(context: RequestContext[ClientSession, None], params: ElicitRequestParams):
             return ElicitResult(action="accept", content=content)
 

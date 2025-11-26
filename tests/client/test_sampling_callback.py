@@ -1,5 +1,6 @@
 import pytest
 
+from mcp.client.session import TransportSession
 from mcp.client.session import ClientSession
 from mcp.shared.context import RequestContext
 from mcp.shared.memory import (
