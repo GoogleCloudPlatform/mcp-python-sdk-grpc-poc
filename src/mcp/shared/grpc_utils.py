@@ -6,29 +6,24 @@ import inspect
 import grpc
 from grpc import aio
 from mcp.shared import version
-from typing import Any, Callable, TypeVar, AsyncGenerator, List, Coroutine, cast, Type
-from typing_extensions import ParamSpec, Concatenate
+from typing import Any, Callable, TypeVar, AsyncGenerator, List, cast
+from typing_extensions import ParamSpec
 
 P = ParamSpec("P")
 R = TypeVar("R")
-S = TypeVar("S")  # Self type for the class
-Req = TypeVar("Req")
-Resp = TypeVar("Resp")
+WrappedFunc = Callable[..., Any]
 
 MCP_PROTOCOL_VERSION_KEY = "mcp-protocol-version"
 MCP_TOOL_NAME_KEY = "mcp-tool-name"
 MCP_RESOURCE_URI_KEY = "mcp-resource-uri"
 
-AsyncFunc = Callable[Concatenate[S, Req, aio.ServicerContext[Req, Resp], P], Coroutine[Any, Any, R]]
-AsyncGenFunc = Callable[Concatenate[S, Req, aio.ServicerContext[Req, Resp], P], AsyncGenerator[R, None]]
-
-def check_protocol_version_from_metadata(func: Callable[P, R]) -> Callable[P, R]:
+def check_protocol_version_from_metadata(func: WrappedFunc) -> WrappedFunc:
   """Decorator to check protocol version from metadata for gRPC methods.
   It aborts the RPC if the protocol version is not provided or is not supported.
   """
 
   @functools.wraps(func)
-  async def async_wrapper(self: S, request: Req, context: aio.ServicerContext[Req, Resp], *args: P.args, **kwargs: P.kwargs) -> Any:
+  async def async_wrapper(self: Any, request: Any, context: aio.ServicerContext[Any, Any], *args: Any, **kwargs: Any) -> Any:
     protocol_version_str = await get_protocol_version_from_context(context, version.SUPPORTED_PROTOCOL_VERSIONS)
     if protocol_version_str in version.SUPPORTED_PROTOCOL_VERSIONS:
       await context.send_initial_metadata([
@@ -37,7 +32,7 @@ def check_protocol_version_from_metadata(func: Callable[P, R]) -> Callable[P, R]
     return await func(self, request, context, *args, **kwargs)
 
   @functools.wraps(func)
-  async def async_generator_wrapper(self: S, request: Req, context: aio.ServicerContext[Req, Resp], *args: P.args, **kwargs: P.kwargs) -> AsyncGenerator[Any, None]:
+  async def async_generator_wrapper(self: Any, request: Any, context: aio.ServicerContext[Any, Any], *args: Any, **kwargs: Any) -> AsyncGenerator[Any, None]:
     protocol_version_str = await get_protocol_version_from_context(context, version.SUPPORTED_PROTOCOL_VERSIONS)
     if protocol_version_str in version.SUPPORTED_PROTOCOL_VERSIONS:
       await context.send_initial_metadata([
@@ -47,9 +42,9 @@ def check_protocol_version_from_metadata(func: Callable[P, R]) -> Callable[P, R]
       yield item
 
   if inspect.isasyncgenfunction(func):
-    return cast(Callable[P, R], async_generator_wrapper)
+    return cast(WrappedFunc, async_generator_wrapper)
   elif asyncio.iscoroutinefunction(func):
-    return cast(Callable[P, R], async_wrapper)
+    return cast(WrappedFunc, async_wrapper)
   else:
     # This case should not happen for gRPC handlers
     return func
