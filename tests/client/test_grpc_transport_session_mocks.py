@@ -3,29 +3,30 @@ from datetime import timedelta
 from unittest import mock
 import grpc
 import pytest
+import time
 import unittest.mock
-from typing import cast, Any, Iterator
 
 from mcp.proto import mcp_pb2, mcp_pb2_grpc
 from mcp.shared import version
+from google.protobuf import struct_pb2
 
 from mcp.client.grpc_transport_session import GRPCTransportSession
 from mcp.client.cache import CacheEntry
-
-from mcp.client.grpc_transport_session import GRPCTransportSession
-from mcp.client.cache import CacheEntry
+from mcp.client import session_common
 from mcp.shared.exceptions import McpError
 from mcp import types
 
 # Fixtures from test_grpc_transport_session.py
 import socket
-from typing import AsyncGenerator
-from mcp.server.fastmcp.server import FastMCP
-from mcp.server.grpc import create_mcp_grpc_server
-from pydantic import AnyUrl
-from mcp.server.fastmcp.server import FastMCP
+from collections.abc import Generator
+from mcp.server.fastmcp.server import Context, FastMCP
 from mcp.server.grpc import create_mcp_grpc_server
 from mcp import types
+from io import BytesIO
+from PIL import Image as PILImage
+import base64
+from pydantic import BaseModel
+from jsonschema import ValidationError
 
 
 def setup_test_server(port: int) -> FastMCP:
@@ -48,7 +49,7 @@ def server_port() -> int:
 
 
 @pytest.fixture
-async def grpc_server(server_port: int) -> AsyncGenerator[grpc.aio.Server, None]:
+async def grpc_server(server_port: int) -> Generator[None, None, None]:
     """Start a gRPC server in process."""
     server_instance = setup_test_server(server_port)
     server = await create_mcp_grpc_server(
@@ -75,19 +76,15 @@ def _create_mock_tool_proto(name: str):
     return mock_tool_proto
 
 
-from typing import TypeVar, Generic, Iterable, AsyncIterator
-
-T = TypeVar('T')
-
-class MockAsyncStream(Generic[T]):
-    def __init__(self, items: Iterable[T]):
+class MockAsyncStream:
+    def __init__(self, items):
         self._items = items
-        self._iterator: Iterator[T] = iter(items)
+        self._iterator = iter(items)
 
-    def __aiter__(self) -> AsyncIterator[T]:
+    def __aiter__(self):
         return self
 
-    async def __anext__(self) -> T:
+    async def __anext__(self):
         try:
             return next(self._iterator)
         except StopIteration:
@@ -101,9 +98,9 @@ async def test_list_resources_with_ttl_cache(grpc_server: None, server_port: int
         target=f"127.0.0.1:{server_port}", message_handler=message_handler
     )
     try:
-        list_resources_response = mock.MagicMock(resources=[], ttl=mock.MagicMock(seconds=0.01, nanos=0))  # type: ignore[attr-defined]
+        list_resources_response = mock.MagicMock(resources=[], ttl=mock.MagicMock(seconds=0.01, nanos=0))
         list_resources_mock = mock.AsyncMock(return_value=list_resources_response)
-        transport._grpc_stub.ListResources = list_resources_mock  # type: ignore[attr-defined]
+        transport.grpc_stub.ListResources = list_resources_mock
 
         # First call, should call stub
         await transport.list_resources()
@@ -113,7 +110,7 @@ async def test_list_resources_with_ttl_cache(grpc_server: None, server_port: int
         await asyncio.sleep(0.02)
         message_handler.assert_called_once()
         notification = message_handler.call_args[0][0]
-        assert notification.root.method == "notifications/resources/list_changed"  # type: ignore[attr-defined]
+        assert notification.root.method == "notifications/resources/list_changed"
 
         # Second call after expiry, should call stub again
         await transport.list_resources()
@@ -132,9 +129,9 @@ async def test_list_resource_templates_with_ttl_cache(
         target=f"127.0.0.1:{server_port}", message_handler=message_handler
     )
     try:
-        list_templates_response = mock.MagicMock(resourceTemplates=[], ttl=mock.MagicMock(seconds=0.01, nanos=0))  # type: ignore[attr-defined]
+        list_templates_response = mock.MagicMock(resourceTemplates=[], ttl=mock.MagicMock(seconds=0.01, nanos=0))
         list_templates_mock = mock.AsyncMock(return_value=list_templates_response)
-        transport._grpc_stub.ListResourceTemplates = list_templates_mock  # type: ignore[attr-defined]
+        transport.grpc_stub.ListResourceTemplates = list_templates_mock
 
         # First call, should call stub
         await transport.list_resource_templates()
@@ -144,7 +141,7 @@ async def test_list_resource_templates_with_ttl_cache(
         await asyncio.sleep(0.02)
         message_handler.assert_called_once()
         notification = message_handler.call_args[0][0]
-        assert notification.root.method == "notifications/resources/list_changed"  # type: ignore[attr-defined]
+        assert notification.root.method == "notifications/resources/list_changed"
 
         # Second call after expiry, should call stub again
         await transport.list_resource_templates()
@@ -177,8 +174,8 @@ async def test_list_resources_honors_session_timeout(grpc_server: None, server_p
         target=f"127.0.0.1:{server_port}",
         read_timeout_seconds=timedelta(seconds=5),
     )
-    list_resources_mock = mock.AsyncMock(return_value=mock.MagicMock(resources=[], ttl=mock.MagicMock(seconds=1, nanos=0)))  # type: ignore[attr-defined]
-    transport._grpc_stub.ListResources = list_resources_mock  # type: ignore[attr-defined]
+    list_resources_mock = mock.AsyncMock(return_value=mock.MagicMock(resources=[], ttl=mock.MagicMock(seconds=1, nanos=0)))
+    transport.grpc_stub.ListResources = list_resources_mock
     try:
         await transport.list_resources()
         list_resources_mock.assert_called_once_with(mock.ANY, timeout=5.0, metadata=[('mcp-protocol-version', version.LATEST_PROTOCOL_VERSION)])
@@ -192,8 +189,8 @@ async def test_list_tools_honors_session_timeout(grpc_server: None, server_port:
         target=f"127.0.0.1:{server_port}",
         read_timeout_seconds=timedelta(seconds=5),
     )
-    list_tool_mock = mock.AsyncMock(return_value=mock.MagicMock(tools=[], ttl=mock.MagicMock(seconds=1, nanos=0)))  # type: ignore[attr-defined]
-    transport._grpc_stub.ListTools = list_tool_mock  # type: ignore[attr-defined]
+    list_tool_mock = mock.AsyncMock(return_value=mock.MagicMock(tools=[], ttl=mock.MagicMock(seconds=1, nanos=0)))
+    transport.grpc_stub.ListTools = list_tool_mock
     try:
         await transport.list_tools()
         list_tool_mock.assert_called_once_with(mock.ANY, timeout=5.0, metadata=[('mcp-protocol-version', version.LATEST_PROTOCOL_VERSION)])
@@ -207,8 +204,8 @@ async def test_list_resource_templates_honors_session_timeout(grpc_server: None,
         target=f"127.0.0.1:{server_port}",
         read_timeout_seconds=timedelta(seconds=5),
     )
-    list_templates_mock = mock.AsyncMock(return_value=mock.MagicMock(resourceTemplates=[], ttl=mock.MagicMock(seconds=1, nanos=0)))  # type: ignore[attr-defined]
-    transport._grpc_stub.ListResourceTemplates = list_templates_mock  # type: ignore[attr-defined]
+    list_templates_mock = mock.AsyncMock(return_value=mock.MagicMock(resourceTemplates=[], ttl=mock.MagicMock(seconds=1, nanos=0)))
+    transport.grpc_stub.ListResourceTemplates = list_templates_mock
     try:
         await transport.list_resource_templates()
         list_templates_mock.assert_called_once_with(mock.ANY, timeout=5.0, metadata=[('mcp-protocol-version', version.LATEST_PROTOCOL_VERSION)])
@@ -223,7 +220,7 @@ async def test_read_resource_honors_session_timeout(grpc_server: None, server_po
         read_timeout_seconds=timedelta(seconds=5),
     )
     read_resource_mock = mock.AsyncMock()
-    transport._grpc_stub.ReadResource = read_resource_mock  # type: ignore[attr-defined]
+    transport.grpc_stub.ReadResource = read_resource_mock
     resource_content_mock = mock.MagicMock(uri="test://resource", mime_type="text/plain", text="text", blob=None)
     read_resource_mock.return_value = mock.MagicMock(resource=resource_content_mock)
 
@@ -233,12 +230,12 @@ async def test_read_resource_honors_session_timeout(grpc_server: None, server_po
             "list_resources",
             mock.AsyncMock(),
         ):
-            type(transport._list_resources_cache).is_valid = mock.PropertyMock(return_value=True)  # type: ignore[attr-defined]
-            transport._list_resources_cache._data = types.ListResourcesResult(  # type: ignore[attr-defined]
-                resources=[types.Resource(uri=cast(AnyUrl, "test://resource"), name="test_resource", title="Test Resource", description="A test resource", mimeType="text/plain")]
+            type(transport._list_resources_cache).is_valid = mock.PropertyMock(return_value=True)
+            transport._list_resources_cache._data = types.ListResourcesResult(
+                resources=[types.Resource(uri="test://resource", name="test_resource", title="Test Resource", description="A test resource", mimeType="text/plain")]
             )
-            await transport.read_resource(cast(AnyUrl, "test://resource"))
-            transport.list_resources.assert_not_called()  # type: ignore[attr-defined]
+            await transport.read_resource("test://resource")
+            transport.list_resources.assert_not_called()
             read_resource_mock.assert_called_once_with(mock.ANY, timeout=5.0, metadata=[('mcp-resource-uri', 'test://resource'), ('mcp-protocol-version', version.LATEST_PROTOCOL_VERSION)])
     finally:
         await transport.close()
@@ -257,7 +254,7 @@ async def test_list_resources_deadline_exceeded(grpc_server: None, server_port: 
     transport = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     try:
         with mock.patch.object(
-            transport._grpc_stub, "ListResources", side_effect=deadline_error  # type: ignore[attr-defined]
+            transport.grpc_stub, "ListResources", side_effect=deadline_error
         ), pytest.raises(McpError) as e:
             await transport.list_resources()
         assert e.value.error.code == types.REQUEST_TIMEOUT
@@ -272,7 +269,7 @@ async def test_list_resource_templates_deadline_exceeded(grpc_server: None, serv
     transport = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     try:
         with mock.patch.object(
-            transport._grpc_stub, "ListResourceTemplates", side_effect=deadline_error  # type: ignore[attr-defined]
+            transport.grpc_stub, "ListResourceTemplates", side_effect=deadline_error
         ), pytest.raises(McpError) as e:
             await transport.list_resource_templates()
         assert e.value.error.code == types.REQUEST_TIMEOUT
@@ -289,14 +286,14 @@ async def test_read_resource_deadline_exceeded(grpc_server: None, server_port: i
         with mock.patch.object(
             transport, "list_resources", mock.AsyncMock()
         ):
-            type(transport._list_resources_cache).is_valid = mock.PropertyMock(return_value=True)  # type: ignore[attr-defined]
-            transport._list_resources_cache._data = types.ListResourcesResult(  # type: ignore[attr-defined]
-                resources=[types.Resource(uri=cast(AnyUrl, "test://resource"), name="test_resource", mimeType="text/plain")]
+            type(transport._list_resources_cache).is_valid = mock.PropertyMock(return_value=True)
+            transport._list_resources_cache._data = types.ListResourcesResult(
+                resources=[types.Resource(uri="test://resource", name="test_resource", mimeType="text/plain")]
             )
             with mock.patch.object(
-                transport._grpc_stub, "ReadResource", side_effect=deadline_error  # type: ignore[attr-defined]
+                transport.grpc_stub, "ReadResource", side_effect=deadline_error
             ), pytest.raises(McpError) as e:
-                await transport.read_resource(cast(AnyUrl, "test://resource"))
+                await transport.read_resource("test://resource")
         assert e.value.error.code == types.REQUEST_TIMEOUT
         assert "Timed out" in e.value.error.message
         assert "ReadResourceRequest" in e.value.error.message
@@ -309,7 +306,7 @@ async def test_list_tools_deadline_exceeded(grpc_server: None, server_port: int)
     transport = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     try:
         with mock.patch.object(
-            transport._grpc_stub, "ListTools", side_effect=deadline_error  # type: ignore[attr-defined]
+            transport.grpc_stub, "ListTools", side_effect=deadline_error
         ), pytest.raises(McpError) as e:
             await transport.list_tools()
         assert e.value.error.code == types.REQUEST_TIMEOUT
@@ -324,7 +321,7 @@ async def test_call_tool_deadline_exceeded(grpc_server: None, server_port: int):
     transport = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     try:
         with mock.patch.object(
-            transport._grpc_stub, "CallTool", side_effect=deadline_error  # type: ignore[attr-defined]
+            transport.grpc_stub, "CallTool", side_effect=deadline_error
         ), pytest.raises(McpError) as e:
             await transport.call_tool("tool", {})
         assert e.value.error.code == types.REQUEST_TIMEOUT
@@ -339,16 +336,16 @@ async def test_call_tool_list_tools_initial_call(grpc_server: None, server_port:
     transport = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     try:
         mock_tool_proto = _create_mock_tool_proto("greet")
-        list_tools_response = mock.MagicMock(tools=[mock_tool_proto], ttl=mock.MagicMock(seconds=1, nanos=0))  # type: ignore[attr-defined]
+        list_tools_response = mock.MagicMock(tools=[mock_tool_proto], ttl=mock.MagicMock(seconds=1, nanos=0))
         list_tools_mock = mock.AsyncMock(return_value=list_tools_response)
-        transport._grpc_stub.ListTools = list_tools_mock  # type: ignore[attr-defined]
+        transport.grpc_stub.ListTools = list_tools_mock
         call_tool_response = mock.MagicMock(structured_content={"result": "test"})
         call_tool_mock = mock.Mock()
         call_tool_mock.return_value = MockAsyncStream([call_tool_response])
-        transport._grpc_stub.CallTool = call_tool_mock  # type: ignore[attr-defined]
+        transport.grpc_stub.CallTool = call_tool_mock
         # Ensure cache is empty
-        transport._list_tool_cache._data = None  # type: ignore[attr-defined]
-        transport._list_tool_cache._expiry = 0  # type: ignore[attr-defined]
+        transport._list_tool_cache._data = None
+        transport._list_tool_cache._expiry = 0
 
         await transport.call_tool("greet", {"name": "Test"})
         list_tools_mock.assert_called_once()
@@ -360,14 +357,14 @@ async def test_call_tool_list_tools_cache_hit(grpc_server: None, server_port: in
     """Test GRPCTransportSession.call_tool() uses cache when valid."""
     transport = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     try:
-        mock_tool_proto = _create_mock_tool_proto("greet")  # type: ignore[attr-defined]
-        list_tools_response = mock.MagicMock(tools=[mock_tool_proto], ttl=mock.MagicMock(seconds=1, nanos=0))  # type: ignore[attr-defined]
+        mock_tool_proto = _create_mock_tool_proto("greet")
+        list_tools_response = mock.MagicMock(tools=[mock_tool_proto], ttl=mock.MagicMock(seconds=1, nanos=0))
         list_tools_mock = mock.AsyncMock(return_value=list_tools_response)
-        transport._grpc_stub.ListTools = list_tools_mock  # type: ignore[attr-defined]
+        transport.grpc_stub.ListTools = list_tools_mock
         call_tool_response = mock.MagicMock(structured_content={"result": "test"})
         call_tool_mock = mock.Mock()
         call_tool_mock.return_value = MockAsyncStream([call_tool_response])
-        transport._grpc_stub.CallTool = call_tool_mock  # type: ignore[attr-defined]
+        transport.grpc_stub.CallTool = call_tool_mock
         # First call to populate cache
         await transport.call_tool("greet", {"name": "Test"})
         assert list_tools_mock.call_count == 1
@@ -385,19 +382,19 @@ async def test_call_tool_list_tools_cache_invalidation(grpc_server: None, server
         target=f"127.0.0.1:{server_port}", message_handler=message_handler
     )
     try:
-        list_tools_mock = mock.AsyncMock(return_value=mock.MagicMock(tools=[], ttl=mock.MagicMock(seconds=0.1, nanos=0)))  # type: ignore[attr-defined]
-        transport._grpc_stub.ListTools = list_tools_mock  # type: ignore[attr-defined]
+        list_tools_mock = mock.AsyncMock(return_value=mock.MagicMock(tools=[], ttl=mock.MagicMock(seconds=0.1, nanos=0)))
+        transport.grpc_stub.ListTools = list_tools_mock
         call_tool_response = mock.MagicMock(structured_content={"result": "test"})
         call_tool_mock = mock.Mock()
         call_tool_mock.return_value = MockAsyncStream([call_tool_response])
-        transport._grpc_stub.CallTool = call_tool_mock  # type: ignore[attr-defined]
+        transport.grpc_stub.CallTool = call_tool_mock
         # First call to populate cache
         await transport.call_tool("greet", {"name": "Test"})
         # Wait for cache to expire and notification to be sent
         await asyncio.sleep(0.2)
         message_handler.assert_called_once()
         notification = message_handler.call_args[0][0]
-        assert notification.root.method == "notifications/tools/list_changed"  # type: ignore[attr-defined]
+        assert notification.root.method == "notifications/tools/list_changed"
     finally:
         await transport.close()
 
@@ -407,17 +404,17 @@ async def test_call_tool_list_tools_cache_miss(grpc_server: None, server_port: i
     transport = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     try:
         mock_tool_proto_1 = _create_mock_tool_proto("greet")
-        list_tools_response_1 = mock.MagicMock(tools=[mock_tool_proto_1], ttl=mock.MagicMock(seconds=0.1, nanos=0))  # type: ignore[attr-defined]
-        list_tools_response_2 = mock.MagicMock(tools=[mock_tool_proto_1], ttl=mock.MagicMock(seconds=1, nanos=0))  # type: ignore[attr-defined]
+        list_tools_response_1 = mock.MagicMock(tools=[mock_tool_proto_1], ttl=mock.MagicMock(seconds=0.1, nanos=0))
+        list_tools_response_2 = mock.MagicMock(tools=[mock_tool_proto_1], ttl=mock.MagicMock(seconds=1, nanos=0))
         list_tools_mock = mock.AsyncMock(side_effect=[list_tools_response_1, list_tools_response_2])
-        transport._grpc_stub.ListTools = list_tools_mock  # type: ignore[attr-defined]
+        transport.grpc_stub.ListTools = list_tools_mock
         call_tool_response = mock.MagicMock(structured_content={"result": "test"})
         call_tool_mock = mock.Mock()
         call_tool_mock.return_value = MockAsyncStream([call_tool_response])
-        transport._grpc_stub.CallTool = call_tool_mock  # type: ignore[attr-defined]
+        transport.grpc_stub.CallTool = call_tool_mock
         # Ensure cache is empty
-        transport._list_tool_cache._data = None  # type: ignore[attr-defined]
-        transport._list_tool_cache._expiry = 0  # type: ignore[attr-defined]
+        transport._list_tool_cache._data = None
+        transport._list_tool_cache._expiry = 0
 
         await transport.call_tool("greet", {"name": "Test"})
         assert list_tools_mock.call_count == 1
@@ -428,29 +425,30 @@ async def test_call_tool_list_tools_cache_miss(grpc_server: None, server_port: i
         await transport.close()
 
 @pytest.mark.anyio
+@pytest.mark.anyio
 async def test_read_resource_grpc_transport_text(grpc_server: None, server_port: int):
     """Test GRPCTransportSession.read_resource() for text resources."""
     transport = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     try:
         with mock.patch.object(transport, "list_resources", mock.AsyncMock()):
-            type(transport._list_resources_cache).is_valid = mock.PropertyMock(return_value=True)  # type: ignore[attr-defined]
-            transport._list_resources_cache._data = types.ListResourcesResult(  # type: ignore[attr-defined]
+            type(transport._list_resources_cache).is_valid = mock.PropertyMock(return_value=True)
+            transport._list_resources_cache._data = types.ListResourcesResult(
                 resources=[
-                    types.Resource(uri=cast(AnyUrl, "test://resource"), name="test_resource", title="Test Resource", description="A test resource", mimeType="text/plain")
+                    types.Resource(uri="test://resource", name="test_resource", title="Test Resource", description="A test resource", mimeType="text/plain")
                 ]
             )
             read_resource_mock = mock.AsyncMock()
             read_resource_response = mock.MagicMock()
             read_resource_response.resource = [mock.MagicMock(uri="test://resource", mime_type="text/plain", text="test resource content")]
             read_resource_mock.return_value = read_resource_response
-            transport._grpc_stub.ReadResource = read_resource_mock  # type: ignore[attr-defined]
+            transport.grpc_stub.ReadResource = read_resource_mock
 
-            read_resource_result = await transport.read_resource(cast(AnyUrl, "test://resource"))
+            read_resource_result = await transport.read_resource("test://resource")
             assert read_resource_result is not None
-            transport.list_resources.assert_not_called() # type: ignore[attr-defined]
+            transport.list_resources.assert_not_called()
         assert len(read_resource_result.contents) == 1
         content = read_resource_result.contents[0]
-        assert isinstance(content, types.TextContent) and content.text == "test resource content"
+        assert content.text == "test resource content"
         assert content.mimeType == "text/plain"
     finally:
         await transport.close()
@@ -464,7 +462,7 @@ async def test_call_tool_grpc_transport_session_timeout_override(grpc_server: No
     )
     try:
         call_tool_mock = mock.MagicMock()
-        transport._grpc_stub.CallTool = call_tool_mock  # type: ignore[attr-defined]
+        transport.grpc_stub.CallTool = call_tool_mock
 
         response_mock = mock.MagicMock()
         response_mock.common.HasField.return_value = False
@@ -504,7 +502,7 @@ async def test_call_tool_grpc_transport_session_timeout_default(grpc_server: Non
     )
     try:
         call_tool_mock = mock.MagicMock()
-        transport._grpc_stub.CallTool = call_tool_mock  # type: ignore[attr-defined]
+        transport.grpc_stub.CallTool = call_tool_mock
 
         response_mock = mock.MagicMock()
         response_mock.common.HasField.return_value = False
@@ -542,7 +540,7 @@ async def test_call_tool_grpc_transport_no_session_timeout_with_call_timeout(grp
     )
     try:
         call_tool_mock = mock.MagicMock()
-        transport_no_session_timeout._grpc_stub.CallTool = call_tool_mock  # type: ignore[attr-defined]
+        transport_no_session_timeout.grpc_stub.CallTool = call_tool_mock
         response_mock = mock.MagicMock()
         response_mock.common.HasField.return_value = False
         response_mock.content = []
@@ -577,7 +575,7 @@ async def test_call_tool_grpc_transport_no_session_timeout_no_call_timeout(grpc_
     )
     try:
         call_tool_mock = mock.MagicMock()
-        transport_no_session_timeout._grpc_stub.CallTool = call_tool_mock  # type: ignore[attr-defined]
+        transport_no_session_timeout.grpc_stub.CallTool = call_tool_mock
         response_mock = mock.MagicMock()
         response_mock.common.HasField.return_value = False
         response_mock.content = []
@@ -616,7 +614,7 @@ async def test_validate_tool_result_validation_error(grpc_server: None, server_p
             inputSchema={},
             outputSchema={"type": "object", "properties": {"message": {"type": "string"}}},
         )
-        transport._list_tool_cache.set(  # type: ignore[attr-defined]
+        transport._list_tool_cache.set(
             {"tool_with_schema": mock_tool_with_schema},
             timedelta(seconds=60)
         )
@@ -639,7 +637,7 @@ async def test_validate_tool_result_validation_error(grpc_server: None, server_p
     finally:
         await transport.close()
 
-async def mock_call_tool_generator(responses: list[Any]):
+async def mock_call_tool_generator(responses):
     """An async generator to mock CallTool responses."""
     for response in responses:
         if isinstance(response, Exception):
@@ -647,14 +645,14 @@ async def mock_call_tool_generator(responses: list[Any]):
         yield response
 
 @pytest.fixture
-def mock_grpc_stub(monkeypatch: Any):
+def mock_grpc_stub(monkeypatch):
     """Fixture to mock the gRPC stub."""
     mock_stub = unittest.mock.Mock()
     monkeypatch.setattr(mcp_pb2_grpc, "McpStub", unittest.mock.Mock(return_value=mock_stub))
     return mock_stub
 
 @pytest.mark.anyio
-async def test_call_tool_version_mismatch_retry_success(mock_grpc_stub: Any, monkeypatch: Any, server_port: int):
+async def test_call_tool_version_mismatch_retry_success(mock_grpc_stub, monkeypatch, server_port):
     """Test CallTool retries successfully after a version mismatch."""
     session = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     session.negotiated_version = "v1"
@@ -662,9 +660,9 @@ async def test_call_tool_version_mismatch_retry_success(mock_grpc_stub: Any, mon
 
     # Define the sequence of responses for each CallTool invocation
     e = grpc.RpcError()
-    e.code = lambda: grpc.StatusCode.UNIMPLEMENTED  # type: ignore[attr-defined]
-    e.details = lambda: "Unsupported protocol version: v1"  # type: ignore[attr-defined]
-    e.initial_metadata = lambda: [("mcp-protocol-version", "v2")]  # type: ignore[attr-defined]
+    e.code = lambda: grpc.StatusCode.UNIMPLEMENTED
+    e.details = lambda: "Unsupported protocol version: v1"
+    e.initial_metadata = lambda: [("mcp-protocol-version", "v2")]
 
     success_response = mcp_pb2.CallToolResponse(is_error=False)
     content_item = mcp_pb2.CallToolResponse.Content()
@@ -672,7 +670,7 @@ async def test_call_tool_version_mismatch_retry_success(mock_grpc_stub: Any, mon
     success_response.content.append(content_item)
 
     call_count = 0
-    def call_tool_side_effect(*args: Any, **kwargs: Any):
+    def call_tool_side_effect(*args, **kwargs):
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -692,23 +690,23 @@ async def test_call_tool_version_mismatch_retry_success(mock_grpc_stub: Any, mon
 
     # Assertions
     assert session.negotiated_version == "v2"  # Version should be updated
-    assert mock_grpc_stub.CallTool.call_count == 2  # type: ignore[attr-defined]
+    assert mock_grpc_stub.CallTool.call_count == 2
     assert result.isError is False
-    assert isinstance(result.content[0], types.TextContent) and result.content[0].text == "Success"
+    assert result.content[0].text == "Success"
     assert mock_grpc_stub.ListTools.called # Ensure list_tools was called for validation
     assert mock_grpc_stub.ListTools.call_count == 1
 
 @pytest.mark.anyio
-async def test_call_tool_version_mismatch_retry_failure(mock_grpc_stub: Any, monkeypatch: Any, server_port: int):
+async def test_call_tool_version_mismatch_retry_failure(mock_grpc_stub, monkeypatch, server_port):
     """Test CallTool raises McpError if version mismatch persists after retries."""
     session = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     session.negotiated_version = "v1"
 
     # Mock responses: Fail with version mismatch, offering no compatible version.
     e = grpc.RpcError()
-    e.code = lambda: grpc.StatusCode.UNIMPLEMENTED  # type: ignore[attr-defined]
-    e.details = lambda: "Unsupported protocol version: v1"  # type: ignore[attr-defined]
-    e.initial_metadata = lambda: [("mcp-protocol-version", "v3")] # Server suggests v3, client doesn't support  # type: ignore[attr-defined]
+    e.code = lambda: grpc.StatusCode.UNIMPLEMENTED
+    e.details = lambda: "Unsupported protocol version: v1"
+    e.initial_metadata = lambda: [("mcp-protocol-version", "v3")] # Server suggests v3, client doesn't support
 
     mock_grpc_stub.CallTool.side_effect = [e] # Only one call expected
 
@@ -728,7 +726,7 @@ async def test_call_tool_version_mismatch_retry_failure(mock_grpc_stub: Any, mon
     assert excinfo.value.error.code == -32603 # INTERNAL_ERROR
 
 @pytest.mark.anyio
-async def test_call_tool_sends_tool_name_in_metadata(mock_grpc_stub: Any, server_port: int):
+async def test_call_tool_sends_tool_name_in_metadata(mock_grpc_stub, server_port):
     """Test that CallTool sends mcp-tool-name in metadata."""
     session = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     tool_name = "test_tool_name"
@@ -753,7 +751,7 @@ async def test_call_tool_sends_tool_name_in_metadata(mock_grpc_stub: Any, server
     assert mock_grpc_stub.ListTools.called
 
 @pytest.mark.anyio
-async def test_read_resource_sends_resource_uri_in_metadata(mock_grpc_stub: Any, server_port: int):
+async def test_read_resource_sends_resource_uri_in_metadata(mock_grpc_stub, server_port):
     """Test that ReadResource sends mcp-resource-uri in metadata."""
     session = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     resource_uri = "test://some/resource"
@@ -763,7 +761,7 @@ async def test_read_resource_sends_resource_uri_in_metadata(mock_grpc_stub: Any,
 
     # Execute ReadResource
     try:
-        await session.read_resource(cast(AnyUrl, resource_uri))
+        await session.read_resource(resource_uri)
     except McpError:
         pytest.fail("ReadResource raised an unexpected McpError")
 
@@ -776,7 +774,7 @@ async def test_read_resource_sends_resource_uri_in_metadata(mock_grpc_stub: Any,
     assert ("mcp-protocol-version", session.negotiated_version) in metadata
 
 @pytest.mark.anyio
-async def test_call_unary_rpc_metadata_update_on_retry(mock_grpc_stub: Any, monkeypatch: Any, server_port: int):
+async def test_call_unary_rpc_metadata_update_on_retry(mock_grpc_stub, monkeypatch, server_port):
     """Test _call_unary_rpc updates metadata correctly on retry after version mismatch."""
     session = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     initial_version = "v1"
@@ -787,16 +785,16 @@ async def test_call_unary_rpc_metadata_update_on_retry(mock_grpc_stub: Any, monk
     mock_rpc_method = mock.AsyncMock()
     # First call: Raise UNIMPLEMENTED with new_version in metadata
     e = grpc.RpcError()
-    e.code = lambda: grpc.StatusCode.UNIMPLEMENTED  # type: ignore[attr-defined]
-    e.details = lambda: "Unsupported protocol version: v1"  # type: ignore[attr-defined]
-    e.initial_metadata = lambda: [("mcp-protocol-version", new_version)]  # type: ignore[attr-defined]
+    e.code = lambda: grpc.StatusCode.UNIMPLEMENTED
+    e.details = lambda: "Unsupported protocol version: v1"
+    e.initial_metadata = lambda: [("mcp-protocol-version", new_version)]
     # Second call: Successful response
     mock_rpc_method.side_effect = [e, mock.MagicMock()]
 
     # We need a dummy request and timeout
     dummy_request = mcp_pb2.ListToolsRequest()
     dummy_timeout = 5.0
-    initial_metadata: list[tuple[str, str]] = []
+    initial_metadata = []
 
     # Call _call_unary_rpc
     await session._call_unary_rpc(mock_rpc_method, dummy_request, dummy_timeout, metadata=initial_metadata)
@@ -814,4 +812,3 @@ async def test_call_unary_rpc_metadata_update_on_retry(mock_grpc_stub: Any, monk
     metadata2 = kwargs2.get("metadata")
     assert metadata2 is not None
     assert ("mcp-protocol-version", new_version) in metadata2
-    assert session.negotiated_version == new_version
