@@ -59,7 +59,7 @@ The major new files introduced for gRPC transport are:
 
 ## Protocol Definition
 
-The gRPC services and messages are defined in `//third_party/py/mcp_grpc/proto/mcp.proto`. This file is essential for understanding the structure of the gRPC communication.
+The gRPC services and messages are defined in `src/mcp/proto/mcp.proto`. This file is essential for understanding the structure of the gRPC communication.
 
 ## Getting Started
 
@@ -135,7 +135,6 @@ if __name__ == "__main__":
 #### HTTP Client
 
 ```python
-import asyncio
 from datetime import timedelta
 from mcp_grpc.client.session import ClientSession
 from mcp_grpc.client.streamable_http import streamablehttp_client
