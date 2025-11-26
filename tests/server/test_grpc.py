@@ -1,5 +1,4 @@
 import asyncio
-import json
 import socket
 from collections.abc import AsyncGenerator
 
