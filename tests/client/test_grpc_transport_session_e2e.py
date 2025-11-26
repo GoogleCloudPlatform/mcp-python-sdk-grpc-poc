@@ -4,7 +4,6 @@ from collections.abc import Generator
 import base64
 import json
 from io import BytesIO
-from PIL import Image as PILImage
 import logging
 from datetime import timedelta
 import time
@@ -80,10 +79,7 @@ def setup_test_server(port: int) -> FastMCP:
 
     @mcp.tool()
     def get_image() -> types.ImageContent:
-      img = PILImage.new('RGB', (1, 1), color = 'red')
-      buf = BytesIO()
-      img.save(buf, format='PNG')
-      return types.ImageContent(type="image", data=base64.b64encode(buf.getvalue()).decode("utf-8"), mimeType="image/png")
+      return types.ImageContent(type="image", data=base64.b64encode(b"fake img data").decode("utf-8"), mimeType="image/png")
 
     @mcp.tool()
     def get_audio() -> types.AudioContent:
@@ -484,8 +480,8 @@ async def test_list_tools_grpc_transport_failure(server_port: int):
         (
             "get_image",
             {},
-            [{"type": "image", "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4XmP4z8AAAAMBAQAwOwdeAAAAAElFTkSuQmCC", "mimeType": "image/png"}],
-            {'data': 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4XmP4z8AAAAMBAQAwOwdeAAAAAElFTkSuQmCC', 'mimeType': 'image/png', 'annotations': None, '_meta': None, 'type': 'image'},
+            [{"type": "image", "data": base64.b64encode(b"fake img data").decode("utf-8"), "mimeType": "image/png"}],
+            {'data': 'ZmFrZSBpbWcgZGF0YQ==', 'mimeType': 'image/png', 'annotations': None, '_meta': None, 'type': 'image'}
         ),
         (
             "get_audio",
@@ -562,12 +558,7 @@ async def test_call_tool_grpc_transport_success(
             if expected["type"] == "text":
                 assert content_block.text == expected["text"]
             elif expected["type"] == "image":
-                try:
-                    actual_img = PILImage.open(BytesIO(base64.b64decode(content_block.data)))
-                    expected_img = PILImage.open(BytesIO(base64.b64decode(expected["data"])))
-                    assert list(actual_img.getdata()) == list(expected_img.getdata())
-                except Exception as e:
-                    pytest.fail(f"Image comparison failed: {e}")
+                assert base64.b64decode(content_block.data) == base64.b64decode(expected["data"])
                 assert content_block.mimeType == expected["mimeType"]
             elif expected["type"] == "audio":
                 assert content_block.data == expected["data"]
@@ -580,21 +571,7 @@ async def test_call_tool_grpc_transport_success(
                 assert content_block.resource.mimeType == expected["resource"]["mimeType"]
 
         if result.structuredContent is not None and expected_structured_content is not None:
-            if tool_name == "get_image":
-                actual_data = result.structuredContent.pop('data', None)
-                expected_data = expected_structured_content.pop('data', None)
-                assert result.structuredContent == expected_structured_content
-                try:
-                    actual_img = PILImage.open(BytesIO(base64.b64decode(actual_data)))
-                    expected_img = PILImage.open(BytesIO(base64.b64decode(expected_data)))
-                    assert list(actual_img.getdata()) == list(expected_img.getdata())
-                except Exception as e:
-                    pytest.fail(f"Structured content image comparison failed: {e}")
-                # Add the data back in case the objects are used elsewhere
-                result.structuredContent['data'] = actual_data
-                expected_structured_content['data'] = expected_data
-            else:
-                assert result.structuredContent == expected_structured_content
+            assert result.structuredContent == expected_structured_content
         else:
             assert result.structuredContent is None or result.structuredContent == {}
     finally:
