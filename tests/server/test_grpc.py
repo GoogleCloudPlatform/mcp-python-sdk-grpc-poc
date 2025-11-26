@@ -1,8 +1,9 @@
 import asyncio
+import json
 import socket
 from collections.abc import AsyncGenerator
 
-from typing import cast
+from typing import cast, List
 from pathlib import Path
 import unittest.mock
 
@@ -814,7 +815,7 @@ async def test_call_tool_grpc_error(failing_grpc_server: None, failing_grpc_stub
     )
     metadata = [("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION)]
     responses = []
-    with unittest.mock.patch("mcp.server.grpc.MCPGunner.ListTools", side_effect=RuntimeError("Intentional error")):
+    with unittest.mock.patch("mcp.server.grpc.MCPServicer.ListTools", side_effect=RuntimeError("Intentional error")):
         with pytest.raises(grpc.aio.AioRpcError) as excinfo:
             async for response in failing_grpc_stub.CallTool(iter([request]), metadata=metadata):  # type: ignore[attr-defined]
                 responses.append(response)  # type: ignore[attr-defined]
@@ -843,9 +844,8 @@ async def test_call_tool_grpc(grpc_server: None, grpc_stub: mcp_pb2_grpc.McpStub
         responses.append(response)  # type: ignore[attr-defined]
 
     assert len(responses) == 1  # type: ignore
-    assert json.loads(responses[0].content[0].text.text) == {"result": 3}  # type: ignore[attr-defined]
     assert not responses[0].is_error  # type: ignore[attr-defined]
-    assert responses[0].structured_content is None  # type: ignore[attr-defined]
+    assert responses[0].structured_content.fields["result"].number_value == 3  # type: ignore[attr-defined]
 
 @pytest.mark.anyio
 async def test_call_tool_grpc_greet(grpc_server: None, grpc_stub: mcp_pb2_grpc.McpStub):
@@ -868,7 +868,7 @@ async def test_call_tool_grpc_greet(grpc_server: None, grpc_stub: mcp_pb2_grpc.M
     assert len(responses) == 1  # type: ignore
     assert responses[0].content[0].text.text == "Hello, Test! Welcome to the Simple gRPC Server!"  # type: ignore[attr-defined]
     assert not responses[0].is_error  # type: ignore[attr-defined]
-    assert responses[0].structured_content is None  # type: ignore[attr-defined]
+    assert responses[0].structured_content.fields["result"].string_value == "Hello, Test! Welcome to the Simple gRPC Server!"  # type: ignore[attr-defined]
 
 @pytest.mark.anyio
 async def test_call_tool_failing(grpc_server: None, grpc_stub: mcp_pb2_grpc.McpStub):
@@ -889,7 +889,8 @@ async def test_call_tool_failing(grpc_server: None, grpc_stub: mcp_pb2_grpc.McpS
         responses.append(response)  # type: ignore[attr-defined]
 
     assert len(responses) == 1  # type: ignore
-    assert responses[0].content[0].text.text == "This tool is designed to fail."  # type: ignore[attr-defined]
+    assert "Error executing tool failing_tool" in responses[0].content[0].text.text  # type: ignore[attr-defined]
+    assert "This tool is designed to fail" in responses[0].content[0].text.text  # type: ignore[attr-defined]
     assert responses[0].is_error  # type: ignore[attr-defined]
     assert responses[0].structured_content is None  # type: ignore[attr-defined]
 
@@ -912,7 +913,8 @@ async def test_call_tool_list(grpc_server: None, grpc_stub: mcp_pb2_grpc.McpStub
         responses.append(response)  # type: ignore[attr-defined]
 
     assert len(responses) == 1  # type: ignore
-    assert json.loads(responses[0].content[0].text.text) == ["one", "two"]  # type: ignore[attr-defined]
+    result_list = [v.string_value for v in responses[0].structured_content.fields["result"].list_value.values]  # type: ignore[attr-defined]
+    assert result_list == ["one", "two"]  # type: ignore[attr-defined]
     assert not responses[0].is_error  # type: ignore[attr-defined]
 
 @pytest.mark.anyio
@@ -934,7 +936,7 @@ async def test_call_tool_dict(grpc_server: None, grpc_stub: mcp_pb2_grpc.McpStub
         responses.append(response)  # type: ignore[attr-defined]
 
     assert len(responses) == 1  # type: ignore
-    assert json.loads(responses[0].content[0].text.text) == {"key": "value"}  # type: ignore[attr-defined]
+    assert responses[0].structured_content.fields["result"].struct_value.fields["key"].string_value == "value"  # type: ignore[attr-defined]
     assert not responses[0].is_error  # type: ignore[attr-defined]
 
 @pytest.mark.anyio
@@ -956,9 +958,8 @@ async def test_call_tool_structured_dict(grpc_server: None, grpc_stub: mcp_pb2_g
         responses.append(response)  # type: ignore[attr-defined]
 
     assert len(responses) == 1  # type: ignore
-    assert json.loads(responses[0].content[0].text.text) == {"key": "value"}  # type: ignore[attr-defined]
     assert not responses[0].is_error  # type: ignore[attr-defined]
-    assert responses[0].structured_content['key'] == "value"  # type: ignore[attr-defined]
+    assert responses[0].structured_content.fields["key"].string_value == "value"  # type: ignore[attr-defined]
 
 @pytest.mark.anyio
 async def test_call_tool_streaming(grpc_server: None, grpc_stub: mcp_pb2_grpc.McpStub):

@@ -7,6 +7,7 @@ from PIL import Image as PILImage
 import logging
 from datetime import timedelta
 from typing import Any, AsyncGenerator, cast
+from urllib.parse import unquote
 import grpc
 from pydantic import AnyUrl, BaseModel
 from _pytest.logging import LogCaptureFixture
@@ -240,7 +241,7 @@ async def test_list_resource_templates_grpc_transport(
         }
         assert "template_resource" in templates
         assert (
-            str(templates["template_resource"].uriTemplate)
+            unquote(str(templates["template_resource"].uriTemplate))
             == "test://template/{name}"
         )
         assert templates["template_resource"].mimeType == "text/plain"
@@ -533,7 +534,7 @@ async def test_list_tools_grpc_transport_failure(server_port: int):
         (
             "get_untyped_object",
             {},
-            [{"type": "text", "text": json.dumps({"result": "UntypedObject()"}, indent=2)}],
+            [{"type": "text", "text": json.dumps({"result": "UntypedObject()"})}],
             None,
         ),
         (
