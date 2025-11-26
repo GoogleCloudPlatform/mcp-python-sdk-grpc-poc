@@ -7,6 +7,7 @@ from typing import Any
 import anyio
 import pytest
 
+from mcp.client.session import TransportSession
 from mcp.client.session import ClientSession
 from mcp.server import Server
 from mcp.server.lowlevel import NotificationOptions
@@ -20,7 +21,7 @@ from mcp.types import CallToolResult, ClientResult, ServerNotification, ServerRe
 async def run_tool_test(
     tools: list[Tool],
     call_tool_handler: Callable[[str, dict[str, Any]], Awaitable[Any]],
-    test_callback: Callable[[ClientSession], Awaitable[CallToolResult]],
+    test_callback: Callable[[TransportSession], Awaitable[CallToolResult]],
 ) -> CallToolResult | None:
     """Helper to run a tool test with minimal boilerplate.
 

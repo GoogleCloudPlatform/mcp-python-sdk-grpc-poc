@@ -1,58 +1,34 @@
-import logging
 from datetime import timedelta
+import logging
 from typing import Any, Protocol
 
 import anyio.lowlevel
-from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
-from jsonschema import SchemaError, ValidationError, validate
-from pydantic import AnyUrl, TypeAdapter
-
-import mcp.types as types
+from anyio.streams.memory import MemoryObjectReceiveStream
+from anyio.streams.memory import MemoryObjectSendStream
+from jsonschema import SchemaError
+from jsonschema import validate
+from jsonschema import ValidationError
+from mcp.client.session_common import _validate_tool_result
+from mcp.client.session_common import ElicitationFnT
+from mcp.client.session_common import ListRootsFnT
+from mcp.client.session_common import LoggingFnT
+from mcp.client.session_common import MessageHandlerFnT
+from mcp.client.session_common import SamplingFnT
+from mcp.client.transport_session import TransportSession
 from mcp.shared.context import RequestContext
 from mcp.shared.message import SessionMessage
-from mcp.shared.session import BaseSession, ProgressFnT, RequestResponder
+from mcp.shared.session import BaseSession
+from mcp.shared.session import ProgressFnT
+from mcp.shared.session import RequestResponder
 from mcp.shared.version import SUPPORTED_PROTOCOL_VERSIONS
+import mcp.types as types
+from pydantic import AnyUrl
+from pydantic import TypeAdapter
 
-DEFAULT_CLIENT_INFO = types.Implementation(name="mcp", version="0.1.0")
+
+DEFAULT_CLIENT_INFO = types.Implementation(name="mcp", version=types.LATEST_PROTOCOL_VERSION)
 
 logger = logging.getLogger("client")
-
-
-class SamplingFnT(Protocol):
-    async def __call__(
-        self,
-        context: RequestContext["ClientSession", Any],
-        params: types.CreateMessageRequestParams,
-    ) -> types.CreateMessageResult | types.ErrorData: ...
-
-
-class ElicitationFnT(Protocol):
-    async def __call__(
-        self,
-        context: RequestContext["ClientSession", Any],
-        params: types.ElicitRequestParams,
-    ) -> types.ElicitResult | types.ErrorData: ...
-
-
-class ListRootsFnT(Protocol):
-    async def __call__(
-        self, context: RequestContext["ClientSession", Any]
-    ) -> types.ListRootsResult | types.ErrorData: ...
-
-
-class LoggingFnT(Protocol):
-    async def __call__(
-        self,
-        params: types.LoggingMessageNotificationParams,
-    ) -> None: ...
-
-
-class MessageHandlerFnT(Protocol):
-    async def __call__(
-        self,
-        message: RequestResponder[types.ServerRequest, types.ClientResult] | types.ServerNotification | Exception,
-    ) -> None: ...
-
 
 async def _default_message_handler(
     message: RequestResponder[types.ServerRequest, types.ClientResult] | types.ServerNotification | Exception,
@@ -61,7 +37,7 @@ async def _default_message_handler(
 
 
 async def _default_sampling_callback(
-    context: RequestContext["ClientSession", Any],
+    context: RequestContext["TransportSession", Any],
     params: types.CreateMessageRequestParams,
 ) -> types.CreateMessageResult | types.ErrorData:
     return types.ErrorData(
@@ -99,6 +75,7 @@ ClientResponse: TypeAdapter[types.ClientResult | types.ErrorData] = TypeAdapter(
 
 
 class ClientSession(
+    TransportSession,
     BaseSession[
         types.ClientRequest,
         types.ClientNotification,
@@ -316,21 +293,11 @@ class ClientSession(
             # refresh output schema cache
             await self.list_tools()
 
-        output_schema = None
         if name in self._tool_output_schemas:
             output_schema = self._tool_output_schemas.get(name)
+            await _validate_tool_result(output_schema, name, result)
         else:
             logger.warning(f"Tool {name} not listed by server, cannot validate any structured content")
-
-        if output_schema is not None:
-            if result.structuredContent is None:
-                raise RuntimeError(f"Tool {name} has an output schema but did not return structured content")
-            try:
-                validate(result.structuredContent, output_schema)
-            except ValidationError as e:
-                raise RuntimeError(f"Invalid structured content returned by tool {name}: {e}")
-            except SchemaError as e:
-                raise RuntimeError(f"Invalid schema for tool {name}: {e}")
 
     async def list_prompts(self, cursor: str | None = None) -> types.ListPromptsResult:
         """Send a prompts/list request."""
@@ -411,7 +378,7 @@ class ClientSession(
         )
 
     async def _received_request(self, responder: RequestResponder[types.ServerRequest, types.ClientResult]) -> None:
-        ctx = RequestContext[ClientSession, Any](
+        ctx = RequestContext[TransportSession, Any](
             request_id=responder.request_id,
             meta=responder.request_meta,
             session=self,

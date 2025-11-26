@@ -1,3 +1,6 @@
+from .client.transport_session import TransportSession
+from .client.session import ClientSession
+from .client.grpc_transport_session import GRPCTransportSession
 from .client.session import ClientSession
 from .client.session_group import ClientSessionGroup
 from .client.stdio import StdioServerParameters, stdio_client
@@ -113,4 +116,6 @@ __all__ = [
     "stdio_server",
     "CompleteRequest",
     "JSONRPCResponse",
+    "TransportSession",
+    "GRPCTransportSession",
 ]

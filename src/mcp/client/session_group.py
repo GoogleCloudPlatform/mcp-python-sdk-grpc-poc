@@ -21,6 +21,7 @@ from typing_extensions import Self
 
 import mcp
 from mcp import types
+from mcp.client.session import TransportSession
 from mcp.client.sse import sse_client
 from mcp.client.stdio import StdioServerParameters
 from mcp.client.streamable_http import streamablehttp_client
@@ -96,10 +97,10 @@ class ClientSessionGroup:
     _tools: dict[str, types.Tool]
 
     # Client-server connection management.
-    _sessions: dict[mcp.ClientSession, _ComponentNames]
-    _tool_to_session: dict[str, mcp.ClientSession]
+    _sessions: dict[mcp.TransportSession, _ComponentNames]
+    _tool_to_session: dict[str, mcp.TransportSession]
     _exit_stack: contextlib.AsyncExitStack
-    _session_exit_stacks: dict[mcp.ClientSession, contextlib.AsyncExitStack]
+    _session_exit_stacks: dict[mcp.TransportSession, contextlib.AsyncExitStack]
 
     # Optional fn consuming (component_name, serverInfo) for custom names.
     # This is provide a means to mitigate naming conflicts across servers.
@@ -153,7 +154,7 @@ class ClientSessionGroup:
                 tg.start_soon(exit_stack.aclose)
 
     @property
-    def sessions(self) -> list[mcp.ClientSession]:
+    def sessions(self) -> list[mcp.TransportSession]:
         """Returns the list of sessions being managed."""
         return list(self._sessions.keys())
 
@@ -178,7 +179,7 @@ class ClientSessionGroup:
         session_tool_name = self.tools[name].name
         return await session.call_tool(session_tool_name, args)
 
-    async def disconnect_from_server(self, session: mcp.ClientSession) -> None:
+    async def disconnect_from_server(self, session: mcp.TransportSession) -> None:
         """Disconnects from a single MCP server."""
 
         session_known_for_components = session in self._sessions
@@ -216,8 +217,8 @@ class ClientSessionGroup:
             await session_stack_to_close.aclose()
 
     async def connect_with_session(
-        self, server_info: types.Implementation, session: mcp.ClientSession
-    ) -> mcp.ClientSession:
+        self, server_info: types.Implementation, session: mcp.TransportSession
+    ) -> mcp.TransportSession:
         """Connects to a single MCP server."""
         await self._aggregate_components(server_info, session)
         return session
@@ -225,14 +226,14 @@ class ClientSessionGroup:
     async def connect_to_server(
         self,
         server_params: ServerParameters,
-    ) -> mcp.ClientSession:
+    ) -> mcp.TransportSession:
         """Connects to a single MCP server."""
         server_info, session = await self._establish_session(server_params)
         return await self.connect_with_session(server_info, session)
 
     async def _establish_session(
         self, server_params: ServerParameters
-    ) -> tuple[types.Implementation, mcp.ClientSession]:
+    ) -> tuple[types.Implementation, mcp.TransportSession]:
         """Establish a client session to an MCP server."""
 
         session_stack = contextlib.AsyncExitStack()
@@ -276,7 +277,7 @@ class ClientSessionGroup:
             await session_stack.aclose()
             raise
 
-    async def _aggregate_components(self, server_info: types.Implementation, session: mcp.ClientSession) -> None:
+    async def _aggregate_components(self, server_info: types.Implementation, session: mcp.TransportSession) -> None:
         """Aggregates prompts, resources, and tools from a given session."""
 
         # Create a reverse index so we can find all prompts, resources, and
@@ -289,7 +290,7 @@ class ClientSessionGroup:
         prompts_temp: dict[str, types.Prompt] = {}
         resources_temp: dict[str, types.Resource] = {}
         tools_temp: dict[str, types.Tool] = {}
-        tool_to_session_temp: dict[str, mcp.ClientSession] = {}
+        tool_to_session_temp: dict[str, mcp.TransportSession] = {}
 
         # Query the server for its prompts and aggregate to list.
         try:
