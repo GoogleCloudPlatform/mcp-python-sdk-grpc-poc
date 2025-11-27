@@ -27,7 +27,7 @@ from mcp.shared import grpc_utils
 from mcp.shared.exceptions import McpError
 from mcp.shared import version
 
-from typing import Any
+from typing import Any, Optional, Sequence, Tuple
 
 from mcp.shared.session import ProgressFnT
 from mcp.types import ErrorData
@@ -36,6 +36,8 @@ from pydantic import AnyUrl
 
 LATEST_PROTOCOL_VERSION = types.LATEST_PROTOCOL_VERSION
 logger = logging.getLogger(__name__)
+
+ChannelArgumentType = Sequence[Tuple[str, Any]]
 
 class GRPCTransportSession(TransportSession):
     """gRPC-based implementation of the Transport session.
