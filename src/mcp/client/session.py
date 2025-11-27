@@ -1,14 +1,10 @@
 from datetime import timedelta
 import logging
-from typing import Any, Protocol
+from typing import Any
 
 import anyio.lowlevel
 from anyio.streams.memory import MemoryObjectReceiveStream
 from anyio.streams.memory import MemoryObjectSendStream
-from jsonschema import SchemaError
-from jsonschema import validate
-from jsonschema import ValidationError
-from mcp.client.session_common import validate_tool_result
 from mcp.client.session_common import ElicitationFnT
 from mcp.client.session_common import ListRootsFnT
 from mcp.client.session_common import LoggingFnT
@@ -24,6 +20,7 @@ from mcp.shared.version import SUPPORTED_PROTOCOL_VERSIONS
 import mcp.types as types
 from pydantic import AnyUrl
 from pydantic import TypeAdapter
+from mcp.client import session_common
 
 
 DEFAULT_CLIENT_INFO = types.Implementation(name="mcp", version=types.LATEST_PROTOCOL_VERSION)
@@ -37,7 +34,7 @@ async def _default_message_handler(
 
 
 async def _default_sampling_callback(
-    context: RequestContext["TransportSession", Any],
+    context: RequestContext["ClientSession", Any],
     params: types.CreateMessageRequestParams,
 ) -> types.CreateMessageResult | types.ErrorData:
     return types.ErrorData(
@@ -295,7 +292,7 @@ class ClientSession(
 
         if name in self._tool_output_schemas:
             output_schema = self._tool_output_schemas.get(name)
-            await validate_tool_result(output_schema, name, result)
+            await session_common.validate_tool_result(output_schema, name, result) # type: ignore[attr-defined]
         else:
             logger.warning(f"Tool {name} not listed by server, cannot validate any structured content")
 
@@ -378,7 +375,7 @@ class ClientSession(
         )
 
     async def _received_request(self, responder: RequestResponder[types.ServerRequest, types.ClientResult]) -> None:
-        ctx = RequestContext[TransportSession, Any](
+        ctx = RequestContext[ClientSession, Any](
             request_id=responder.request_id,
             meta=responder.request_meta,
             session=self,
