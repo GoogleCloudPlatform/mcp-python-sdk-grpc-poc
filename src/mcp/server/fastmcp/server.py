@@ -339,17 +339,17 @@ class FastMCP(Generic[LifespanResultT]):
         during a request; outside a request, most methods will error.
         """
         try:
-            request_context = self._mcp_server.request_context
+            request_context: RequestContext[ServerSession, LifespanResultT, Request] | None = self._mcp_server.request_context
         except LookupError:
             request_context = None
-        return Context(request_context=request_context, fastmcp=self)
+        return Context[ServerSession, LifespanResultT, Request](request_context=request_context, fastmcp=self)
 
     async def call_tool(
-        self, name: str, arguments: dict[str, Any], request_context: RequestContext | None = None
+        self, name: str, arguments: dict[str, Any], request_context: RequestContext[ServerSession, LifespanResultT, Request] | None = None
     ) -> Sequence[ContentBlock] | dict[str, Any]:
         """Call a tool by name with arguments."""
         if request_context:
-            context = Context(request_context=request_context, fastmcp=self)
+            context = Context[ServerSession, LifespanResultT, Request](request_context=request_context, fastmcp=self)
         else:
             context = self.get_context()
         return await self._tool_manager.call_tool(name, arguments, context=context, convert_result=True)
