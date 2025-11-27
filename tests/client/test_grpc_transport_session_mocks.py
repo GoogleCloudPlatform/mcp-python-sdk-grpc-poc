@@ -476,7 +476,7 @@ async def test_call_tool_grpc_transport_session_timeout_override(grpc_server: No
         with mock.patch(
             "mcp.client.grpc_transport_session.convert.proto_result_to_content"
         ) as mock_convert, mock.patch.object(
-            transport, "_validate_tool_result", mock.AsyncMock()
+            transport, "validate_tool_result", mock.AsyncMock()
         ):
             mock_convert.return_value = types.CallToolResult(
                 content=[types.TextContent(type="text", text="result")]
@@ -516,7 +516,7 @@ async def test_call_tool_grpc_transport_session_timeout_default(grpc_server: Non
         with mock.patch(
             "mcp.client.grpc_transport_session.convert.proto_result_to_content"
         ) as mock_convert, mock.patch.object(
-            transport, "_validate_tool_result", mock.AsyncMock()
+            transport, "validate_tool_result", mock.AsyncMock()
         ):
             mock_convert.return_value = types.CallToolResult(
                 content=[types.TextContent(type="text", text="result")]
@@ -551,7 +551,7 @@ async def test_call_tool_grpc_transport_no_session_timeout_with_call_timeout(grp
         with mock.patch(
             "mcp.client.grpc_transport_session.convert.proto_result_to_content"
         ) as mock_convert, mock.patch.object(
-            transport_no_session_timeout, "_validate_tool_result", mock.AsyncMock()
+            transport_no_session_timeout, "validate_tool_result", mock.AsyncMock()
         ):
             mock_convert.return_value = types.CallToolResult(
                 content=[types.TextContent(type="text", text="result")]
@@ -586,7 +586,7 @@ async def test_call_tool_grpc_transport_no_session_timeout_no_call_timeout(grpc_
         with mock.patch(
             "mcp.client.grpc_transport_session.convert.proto_result_to_content"
         ) as mock_convert, mock.patch.object(
-            transport_no_session_timeout, "_validate_tool_result", mock.AsyncMock()
+            transport_no_session_timeout, "validate_tool_result", mock.AsyncMock()
         ):
             mock_convert.return_value = types.CallToolResult(
                 content=[types.TextContent(type="text", text="result")]

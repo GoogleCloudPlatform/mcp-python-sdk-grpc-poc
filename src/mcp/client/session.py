@@ -8,7 +8,7 @@ from anyio.streams.memory import MemoryObjectSendStream
 from jsonschema import SchemaError
 from jsonschema import validate
 from jsonschema import ValidationError
-from mcp.client.session_common import _validate_tool_result
+from mcp.client.session_common import validate_tool_result
 from mcp.client.session_common import ElicitationFnT
 from mcp.client.session_common import ListRootsFnT
 from mcp.client.session_common import LoggingFnT
@@ -295,7 +295,7 @@ class ClientSession(
 
         if name in self._tool_output_schemas:
             output_schema = self._tool_output_schemas.get(name)
-            await _validate_tool_result(output_schema, name, result)
+            await validate_tool_result(output_schema, name, result)
         else:
             logger.warning(f"Tool {name} not listed by server, cannot validate any structured content")
 
