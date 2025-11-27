@@ -4,11 +4,15 @@ from mcp.shared.context import RequestContext
 from mcp.shared.session import RequestResponder
 from jsonschema import ValidationError, SchemaError
 from jsonschema.validators import validate
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from mcp.client.session import ClientSession
 
 class SamplingFnT(Protocol):
     async def __call__(
         self,
-        context: RequestContext["TransportSession", Any],
+        context: RequestContext["ClientSession", Any],
         params: types.CreateMessageRequestParams,
     ) -> types.CreateMessageResult | types.ErrorData: ...
 
@@ -16,14 +20,14 @@ class SamplingFnT(Protocol):
 class ElicitationFnT(Protocol):
     async def __call__(
         self,
-        context: RequestContext["TransportSession", Any],
+        context: RequestContext["ClientSession", Any],
         params: types.ElicitRequestParams,
     ) -> types.ElicitResult | types.ErrorData: ...
 
 
 class ListRootsFnT(Protocol):
     async def __call__(
-        self, context: RequestContext["TransportSession", Any]
+        self, context: RequestContext["ClientSession", Any]
     ) -> types.ListRootsResult | types.ErrorData: ...
 
 
@@ -44,7 +48,7 @@ async def validate_tool_result(output_schema: dict[str, Any],
                                 name: str,
                                 result: types.CallToolResult) -> None:
     """Validates tool result structured content against its output schema."""
-    if output_schema is not None and bool(output_schema):
+    if output_schema and len(output_schema) > 0:
         if result.structuredContent is None and not result.content:
             raise RuntimeError(
                 f"Tool {name} has an output schema but did not return"
