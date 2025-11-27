@@ -54,14 +54,16 @@ class GRPCTransportSession(TransportSession):
         logging_callback: LoggingFnT | None = None,
         message_handler: MessageHandlerFnT | None = None,
         client_info: types.Implementation | None = None,
-        **kwargs,
+        options: Optional[ChannelArgumentType] = None,
+        compression: Optional[grpc.Compression] = None,
+        interceptors: Optional[Sequence[grpc.aio.ClientInterceptor]] = None,
     ) -> None:
       """Initialize the gRPC transport session."""
       logger.info("Creating GRPCTransportSession for target: %s", target)
       if channel_credential is not None:
-          channel = aio.secure_channel(target, channel_credential, **kwargs)
+          channel = aio.secure_channel(target, channel_credential, options=options, compression=compression, interceptors=interceptors)
       else:
-          channel = aio.insecure_channel(target, **kwargs)
+          channel = aio.insecure_channel(target, options=options, compression=compression, interceptors=interceptors)
 
       stub = mcp_pb2_grpc.McpStub(channel)
       self.grpc_stub = stub
