@@ -48,6 +48,7 @@ from mcp.types import PromptArgument as MCPPromptArgument
 from mcp.types import Resource as MCPResource
 from mcp.types import ResourceTemplate as MCPResourceTemplate
 from mcp.types import Tool as MCPTool
+from concurrent.futures import Executor
 
 logger = get_logger(__name__)
 
@@ -196,7 +197,7 @@ class FastMCP(Generic[LifespanResultT]):
             grpc_credentials=grpc_credentials,
         )
 
-        self._mcp_server = MCPServer(
+        self._mcp_server: FastMCP = MCPServer(
             name=name or "FastMCP",
             instructions=instructions,
             # TODO(Marcelo): It seems there's a type mismatch between the lifespan type from an FastMCP and Server.
@@ -294,7 +295,7 @@ class FastMCP(Generic[LifespanResultT]):
             case "grpc":
                 """Attach the FastMCP server with a gRPC server."""
                 from mcp.server.grpc import (  # pylint: disable=g-import-not-at-top
-                    attach_mcp_server_to_grpc_server,
+                    attach_mcp_server_to_grpc_server, # type: ignore[attr-defined]
                 )
                 attach_mcp_server_to_grpc_server(self, server)
             case "streamable-http":
