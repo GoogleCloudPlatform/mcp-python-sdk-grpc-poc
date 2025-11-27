@@ -40,7 +40,7 @@ class MessageHandlerFnT(Protocol):
         message: RequestResponder[types.ServerRequest, types.ClientResult] | types.ServerNotification | Exception,
     ) -> None: ...
 
-async def _validate_tool_result(output_schema: dict[str, Any],
+async def validate_tool_result(output_schema: dict[str, Any],
                                 name: str,
                                 result: types.CallToolResult) -> None:
     """Validates tool result structured content against its output schema."""
