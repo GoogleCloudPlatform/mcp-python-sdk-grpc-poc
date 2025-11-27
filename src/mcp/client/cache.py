@@ -3,8 +3,7 @@
 import asyncio
 from datetime import timedelta
 import datetime
-import time
-from typing import Any, Callable, Coroutine, TypeVar
+from typing import Any, Callable, Coroutine
 
 ExpiryCallback = Callable[[], Coroutine[Any, Any, None]]
 
