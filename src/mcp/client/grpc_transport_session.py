@@ -219,7 +219,7 @@ class GRPCTransportSession(TransportSession):
         """Send an initialize request."""
         ...
 
-    async def send_ping(self):
+    async def send_ping(self) -> types.EmptyResult:
       ...
 
 
