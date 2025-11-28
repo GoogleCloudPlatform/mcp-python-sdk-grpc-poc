@@ -59,17 +59,17 @@ class TransportSession(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def read_resource(self, uri: AnyUrl) -> types.ReadResourceResult:
+    async def read_resource(self, uri: str) -> types.ReadResourceResult:
         """Send a resources/read request."""
         raise NotImplementedError
 
     @abstractmethod
-    async def subscribe_resource(self, uri: AnyUrl) -> types.EmptyResult:
+    async def subscribe_resource(self, uri: str) -> types.EmptyResult:
         """Send a resources/subscribe request."""
         raise NotImplementedError
 
     @abstractmethod
-    async def unsubscribe_resource(self, uri: AnyUrl) -> types.EmptyResult:
+    async def unsubscribe_resource(self, uri: str) -> types.EmptyResult:
         """Send a resources/unsubscribe request."""
         raise NotImplementedError
 
