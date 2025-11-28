@@ -227,9 +227,9 @@ class GRPCTransportSession(TransportSession):
         try:
             timeout = self._session_read_timeout_seconds.total_seconds() if self._session_read_timeout_seconds else None
             response = await self._call_unary_rpc(
-                self.grpc_stub.ListResources,
+                self.grpc_stub.ListResources,  # type: ignore
                 request,
-                timeout,  # type: ignore
+                timeout,
             )
             resources = convert.resource_protos_to_types(list(response.resources))
             resources_dict = {resource.name: resource for resource in resources}
@@ -258,9 +258,9 @@ class GRPCTransportSession(TransportSession):
         try:
             timeout = self._session_read_timeout_seconds.total_seconds() if self._session_read_timeout_seconds else None
             response = await self._call_unary_rpc(
-                self.grpc_stub.ListResourceTemplates,
+                self.grpc_stub.ListResourceTemplates,  # type: ignore
                 request,
-                timeout,  # type: ignore
+                timeout,
             )
             resource_templates = convert.resource_template_protos_to_types(list(response.resource_templates))
             resource_templates_dict = {template.name: template for template in resource_templates}
@@ -289,10 +289,10 @@ class GRPCTransportSession(TransportSession):
             timeout = self._session_read_timeout_seconds.total_seconds() if self._session_read_timeout_seconds else None
             metadata = [(grpc_utils.MCP_RESOURCE_URI_KEY, str(uri))]
             response = await self._call_unary_rpc(
-                self.grpc_stub.ReadResource,
+                self.grpc_stub.ReadResource,  # type: ignore
                 request,
                 timeout,
-                metadata=metadata,  # type: ignore
+                metadata=metadata,
             )
             resource_contents_list = response.resource
             contents: list[types.TextResourceContents | types.BlobResourceContents] = []
@@ -545,9 +545,9 @@ class GRPCTransportSession(TransportSession):
             # Send the request using gRPC stub
             timeout = self._session_read_timeout_seconds.total_seconds() if self._session_read_timeout_seconds else None
             response = await self._call_unary_rpc(
-                self.grpc_stub.ListTools,
+                self.grpc_stub.ListTools,  # type: ignore
                 request,
-                timeout,  # type: ignore
+                timeout,
             )
 
             # Convert gRPC response to ListToolsResult

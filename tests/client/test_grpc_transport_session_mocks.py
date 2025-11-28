@@ -776,9 +776,9 @@ async def test_call_tool_version_mismatch_retry_failure(mock_grpc_stub, monkeypa
     e = grpc.RpcError()
     e.code = lambda: grpc.StatusCode.UNIMPLEMENTED  # type: ignore
     e.details = lambda: "Unsupported protocol version: v1"  # type: ignore
-    e.initial_metadata = lambda: [
+    e.initial_metadata = lambda: [  # type: ignore
         ("mcp-protocol-version", "v3")
-    ]  # Server suggests v3, client doesn't support  # type: ignore
+    ]  # Server suggests v3, client doesn't support
 
     mock_grpc_stub.CallTool.side_effect = [e]  # Only one call expected  # type: ignore
 
