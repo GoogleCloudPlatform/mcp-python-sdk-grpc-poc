@@ -184,6 +184,7 @@ async def test_elicitation_with_optional_fields():
     ]
 
     for content, expected in test_cases:
+
         async def callback(context: RequestContext[ClientSession, None], params: ElicitRequestParams):
             return ElicitResult(action="accept", content=content)
 

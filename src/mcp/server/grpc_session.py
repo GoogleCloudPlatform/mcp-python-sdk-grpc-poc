@@ -12,6 +12,7 @@ from mcp.server.transport_session import TransportSession
 
 logger = logging.getLogger(__name__)
 
+
 class GrpcSession(TransportSession):
     """A session object for gRPC tool calls that uses a queue."""
 
@@ -67,9 +68,7 @@ class GrpcSession(TransportSession):
         if message is not None:
             progress_proto.message = message
 
-        response = mcp_pb2.CallToolResponse(
-            common=mcp_pb2.ResponseFields(progress=progress_proto)
-        )
+        response = mcp_pb2.CallToolResponse(common=mcp_pb2.ResponseFields(progress=progress_proto))
         await self._response_queue.put(response)
 
     async def send_resource_list_changed(self) -> None:

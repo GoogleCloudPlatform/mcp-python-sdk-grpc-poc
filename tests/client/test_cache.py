@@ -1,8 +1,9 @@
-from unittest import mock
 import asyncio
-import pytest
-from datetime import timedelta
 import datetime
+from datetime import timedelta
+from unittest import mock
+
+import pytest
 
 from mcp.client.cache import CacheEntry
 
@@ -17,9 +18,7 @@ def test_cache_entry_initial_state():
 def test_cache_entry_set_and_get():
     """Test setting and getting data from CacheEntry."""
     cache = CacheEntry()
-    with mock.patch(
-        "datetime.datetime", wraps=datetime.datetime
-    ) as mock_datetime:
+    with mock.patch("datetime.datetime", wraps=datetime.datetime) as mock_datetime:
         mock_datetime.now.return_value = datetime.datetime.fromtimestamp(0)
         cache.set({"key": "test_data"}, timedelta(seconds=10))
         mock_datetime.now.return_value = datetime.datetime.fromtimestamp(5)
@@ -30,9 +29,7 @@ def test_cache_entry_set_and_get():
 def test_cache_entry_expired():
     """Test that CacheEntry expires correctly."""
     cache = CacheEntry()
-    with mock.patch(
-        "datetime.datetime", wraps=datetime.datetime
-    ) as mock_datetime:
+    with mock.patch("datetime.datetime", wraps=datetime.datetime) as mock_datetime:
         mock_datetime.now.return_value = datetime.datetime.fromtimestamp(0)
         cache.set({"key": "test_data"}, timedelta(seconds=10))
         mock_datetime.now.return_value = datetime.datetime.fromtimestamp(11)
@@ -56,9 +53,7 @@ async def test_cache_entry_expiry_callback():
 async def test_cache_entry_set_with_zero_ttl():
     """Test setting cache with zero TTL."""
     cache = CacheEntry()
-    with mock.patch(
-        "datetime.datetime", wraps=datetime.datetime
-    ) as mock_datetime:
+    with mock.patch("datetime.datetime", wraps=datetime.datetime) as mock_datetime:
         mock_datetime.now.return_value = datetime.datetime.fromtimestamp(0)
         cache.set({"key": "test_data"}, timedelta(seconds=0))
     assert not cache.is_valid
@@ -69,9 +64,7 @@ async def test_cache_entry_set_with_zero_ttl():
 async def test_cache_entry_set_with_negative_ttl():
     """Test setting cache with negative TTL."""
     cache = CacheEntry()
-    with mock.patch(
-        "datetime.datetime", wraps=datetime.datetime
-    ) as mock_datetime:
+    with mock.patch("datetime.datetime", wraps=datetime.datetime) as mock_datetime:
         mock_datetime.now.return_value = datetime.datetime.fromtimestamp(0)
         cache.set({"key": "test_data"}, timedelta(seconds=-1))
     assert not cache.is_valid
@@ -83,9 +76,7 @@ async def test_cancel_expiry_task():
     """Test cancelling the expiry task."""
     callback = mock.AsyncMock()
     cache = CacheEntry(on_expired=callback)
-    with mock.patch(
-        "datetime.datetime", wraps=datetime.datetime
-    ) as mock_datetime:
+    with mock.patch("datetime.datetime", wraps=datetime.datetime) as mock_datetime:
         mock_datetime.now.return_value = datetime.datetime.fromtimestamp(0)
         cache.set({"key": "test_data"}, timedelta(seconds=0.1))
     cache.cancel_expiry_task()

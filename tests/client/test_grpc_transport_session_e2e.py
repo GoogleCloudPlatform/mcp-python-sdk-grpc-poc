@@ -1,25 +1,22 @@
 import asyncio
-import socket
-from collections.abc import AsyncGenerator
-from pydantic import AnyUrl
 import base64
 import json
-
-from typing import Any, cast
 import logging
+import socket
+from collections.abc import AsyncGenerator
 from datetime import timedelta
+from typing import Any, cast
 
 import grpc
-from pydantic import BaseModel
-
 import pytest
 from _pytest.logging import LogCaptureFixture
+from pydantic import AnyUrl, BaseModel
 
+from mcp import types
 from mcp.client.grpc_transport_session import GRPCTransportSession
-from mcp.shared.exceptions import McpError
 from mcp.server.fastmcp.server import Context, FastMCP
 from mcp.server.grpc import create_mcp_grpc_server
-from mcp import types
+from mcp.shared.exceptions import McpError
 
 
 def setup_test_server(port: int) -> FastMCP:
@@ -72,8 +69,8 @@ def setup_test_server(port: int) -> FastMCP:
 
     @mcp.tool()
     def failing_tool():
-      """A tool that always fails."""
-      raise ValueError("This tool always fails")
+        """A tool that always fails."""
+        raise ValueError("This tool always fails")
 
     @mcp.tool()
     async def blocking_tool():
@@ -82,40 +79,47 @@ def setup_test_server(port: int) -> FastMCP:
 
     @mcp.tool()
     def get_image() -> types.ImageContent:
-      return types.ImageContent(type="image", data=base64.b64encode(b"fake img data").decode("utf-8"), mimeType="image/png")
+        return types.ImageContent(
+            type="image", data=base64.b64encode(b"fake img data").decode("utf-8"), mimeType="image/png"
+        )
 
     @mcp.tool()
     def get_audio() -> types.AudioContent:
-      return types.AudioContent(type="audio", data=base64.b64encode(b"fake wav data").decode("utf-8"), mimeType="audio/wav")
+        return types.AudioContent(
+            type="audio", data=base64.b64encode(b"fake wav data").decode("utf-8"), mimeType="audio/wav"
+        )
 
     @mcp.tool()
     def get_resource_link() -> types.ResourceLink:
-      return types.ResourceLink(name="resourcelink", type="resource_link", uri=AnyUrl("test://example/link"))
+        return types.ResourceLink(name="resourcelink", type="resource_link", uri=AnyUrl("test://example/link"))
 
     @mcp.tool()
     def get_embedded_text_resource() -> types.EmbeddedResource:
-      return types.EmbeddedResource(
-          type="resource",
-          resource=types.TextResourceContents(
-              uri=AnyUrl("test://example/embeddedtext"), mimeType="text/plain", text="some text"
-          ),
-      )
+        return types.EmbeddedResource(
+            type="resource",
+            resource=types.TextResourceContents(
+                uri=AnyUrl("test://example/embeddedtext"), mimeType="text/plain", text="some text"
+            ),
+        )
 
     @mcp.tool()
     def get_embedded_blob_resource() -> types.EmbeddedResource:
-      return types.EmbeddedResource(
-          type="resource",
-          resource=types.BlobResourceContents(
-              uri=AnyUrl("test://example/embeddedblob"), mimeType="application/octet-stream", blob=base64.b64encode(b"blobdata").decode("utf-8")
-          ),
-      )
+        return types.EmbeddedResource(
+            type="resource",
+            resource=types.BlobResourceContents(
+                uri=AnyUrl("test://example/embeddedblob"),
+                mimeType="application/octet-stream",
+                blob=base64.b64encode(b"blobdata").decode("utf-8"),
+            ),
+        )
 
     @mcp.tool()
-    def get_untyped_object() -> dict: # type: ignore
+    def get_untyped_object() -> dict:  # type: ignore
         class UntypedObject:
-            def __str__(self): # type: ignore
+            def __str__(self):  # type: ignore
                 return "UntypedObject()"
-        return {"result": str(UntypedObject())} # type: ignore
+
+        return {"result": str(UntypedObject())}  # type: ignore
 
     @mcp.tool()
     async def progress_tool(ctx: Context[Any, Any, Any]) -> str:
@@ -163,9 +167,7 @@ def server_port() -> int:
 async def grpc_server(server_port: int) -> AsyncGenerator[grpc.aio.Server, None]:
     """Start a gRPC server in process."""
     server_instance = setup_test_server(server_port)
-    server = await create_mcp_grpc_server(
-        target=f"127.0.0.1:{server_port}", mcp_server=server_instance
-    )
+    server = await create_mcp_grpc_server(target=f"127.0.0.1:{server_port}", mcp_server=server_instance)
 
     yield server
 
@@ -178,9 +180,7 @@ async def grpc_server(server_port: int) -> AsyncGenerator[grpc.aio.Server, None]
 async def empty_grpc_server(server_port: int) -> AsyncGenerator[grpc.aio.Server, None]:
     """Start a gRPC server in process with no tools."""
     server_instance = setup_empty_test_server(server_port)
-    server = await create_mcp_grpc_server(
-        target=f"127.0.0.1:{server_port}", mcp_server=server_instance
-    )
+    server = await create_mcp_grpc_server(target=f"127.0.0.1:{server_port}", mcp_server=server_instance)
 
     yield server
 
@@ -197,6 +197,7 @@ async def test_setup_test_server_resources(server_port: int) -> None:
     assert "test://blob_resource" in resource_manager._resources
     assert "test://image" in resource_manager._resources
     assert "test://image_bytes" in resource_manager._resources
+
 
 @pytest.mark.anyio
 async def test_list_resources_grpc_transport(grpc_server: grpc.aio.Server, server_port: int) -> None:
@@ -221,9 +222,7 @@ async def test_list_resources_grpc_transport(grpc_server: grpc.aio.Server, serve
 
 
 @pytest.mark.anyio
-async def test_list_resource_templates_grpc_transport(
-    grpc_server: grpc.aio.Server, server_port: int
-) -> None:
+async def test_list_resource_templates_grpc_transport(grpc_server: grpc.aio.Server, server_port: int) -> None:
     """Test GRPCTransportSession.list_resource_templates()."""
     transport = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     try:
@@ -235,10 +234,7 @@ async def test_list_resource_templates_grpc_transport(
             t.name: t for t in list_resource_templates_result.resourceTemplates
         }
         assert "template_resource" in templates
-        assert (
-            str(templates["template_resource"].uriTemplate)
-            == "test://template/{name}"
-        )
+        assert str(templates["template_resource"].uriTemplate) == "test://template/{name}"
         assert templates["template_resource"].mimeType == "text/plain"
     finally:
         await transport.close()
@@ -257,6 +253,7 @@ async def test_list_resources_grpc_transport_failure(server_port: int) -> None:
         assert "Connection refused" in e.value.error.message
     finally:
         await transport.close()
+
 
 @pytest.mark.anyio
 async def test_read_resource_grpc_transport_failure(server_port: int) -> None:
@@ -390,9 +387,7 @@ async def test_list_tools_grpc_transport(grpc_server: grpc.aio.Server, server_po
             },
             "progress_tool_non_int_token": {
                 "name": "progress_tool_non_int_token",
-                "description": (
-                    "A tool that reports progress with non-int token."
-                ),
+                "description": ("A tool that reports progress with non-int token."),
                 "inputSchema": {
                     "properties": {},
                     "title": "progress_tool_non_int_tokenArguments",
@@ -461,9 +456,6 @@ async def test_list_tools_grpc_transport_failure(server_port: int) -> None:
         await transport.close()
 
 
-
-
-
 @pytest.mark.anyio
 @pytest.mark.parametrize(
     "tool_name, tool_args, expected_content, expected_structured_content",
@@ -484,30 +476,64 @@ async def test_list_tools_grpc_transport_failure(server_port: int) -> None:
             "get_image",
             {},
             [{"type": "image", "data": base64.b64encode(b"fake img data").decode("utf-8"), "mimeType": "image/png"}],
-            {'data': 'ZmFrZSBpbWcgZGF0YQ==', 'mimeType': 'image/png', 'annotations': None, '_meta': None, 'type': 'image'}
+            {
+                "data": "ZmFrZSBpbWcgZGF0YQ==",
+                "mimeType": "image/png",
+                "annotations": None,
+                "_meta": None,
+                "type": "image",
+            },
         ),
         (
             "get_audio",
             {},
             [{"type": "audio", "data": base64.b64encode(b"fake wav data").decode("utf-8"), "mimeType": "audio/wav"}],
-            {'data': 'ZmFrZSB3YXYgZGF0YQ==', 'mimeType': 'audio/wav', 'annotations': None, '_meta': None, 'type': 'audio'},
+            {
+                "data": "ZmFrZSB3YXYgZGF0YQ==",
+                "mimeType": "audio/wav",
+                "annotations": None,
+                "_meta": None,
+                "type": "audio",
+            },
         ),
         (
             "get_resource_link",
             {},
             [{"type": "resource_link", "uri": "test://example/link", "name": "resourcelink"}],
-            {'name': 'resourcelink', 'title': None, 'uri': 'test://example/link', 'description': None, 'mimeType': None, 'size': None, 'annotations': None, '_meta': None, 'type': 'resource_link'},
+            {
+                "name": "resourcelink",
+                "title": None,
+                "uri": "test://example/link",
+                "description": None,
+                "mimeType": None,
+                "size": None,
+                "annotations": None,
+                "_meta": None,
+                "type": "resource_link",
+            },
         ),
         (
             "get_embedded_text_resource",
             {},
-            [{
-                "type": "resource",
-                "resource": {"type": "text", "uri": "test://example/embeddedtext", "mimeType": "text/plain", "text": "some text"},
-            }],
+            [
+                {
+                    "type": "resource",
+                    "resource": {
+                        "type": "text",
+                        "uri": "test://example/embeddedtext",
+                        "mimeType": "text/plain",
+                        "text": "some text",
+                    },
+                }
+            ],
             {
                 "type": "resource",
-                "resource": {"uri": "test://example/embeddedtext", "mimeType": "text/plain", "text": "some text", "_meta": None},
+                "resource": {
+                    "uri": "test://example/embeddedtext",
+                    "mimeType": "text/plain",
+                    "text": "some text",
+                    "_meta": None,
+                },
                 "annotations": None,
                 "_meta": None,
             },
@@ -515,13 +541,25 @@ async def test_list_tools_grpc_transport_failure(server_port: int) -> None:
         (
             "get_embedded_blob_resource",
             {},
-            [{
-                "type": "resource",
-                "resource": {"type": "blob", "uri": "test://example/embeddedblob", "mimeType": "application/octet-stream", "blob": base64.b64encode(b"blobdata").decode("utf-8")},
-            }],
+            [
+                {
+                    "type": "resource",
+                    "resource": {
+                        "type": "blob",
+                        "uri": "test://example/embeddedblob",
+                        "mimeType": "application/octet-stream",
+                        "blob": base64.b64encode(b"blobdata").decode("utf-8"),
+                    },
+                }
+            ],
             {
                 "type": "resource",
-                "resource": {"uri": "test://example/embeddedblob", "mimeType": "application/octet-stream", "blob": base64.b64encode(b"blobdata").decode("utf-8"), "_meta": None},
+                "resource": {
+                    "uri": "test://example/embeddedblob",
+                    "mimeType": "application/octet-stream",
+                    "blob": base64.b64encode(b"blobdata").decode("utf-8"),
+                    "_meta": None,
+                },
                 "annotations": None,
                 "_meta": None,
             },
@@ -574,7 +612,7 @@ async def test_call_tool_grpc_transport_success(
                 assert content_block.resource.mimeType == expected["resource"]["mimeType"]
                 if isinstance(content_block.resource, types.TextResourceContents):
                     assert content_block.resource.text == expected["resource"]["text"]
-                else: # isinstance(content_block.resource, types.BlobResourceContents)
+                else:  # isinstance(content_block.resource, types.BlobResourceContents)
                     assert content_block.resource.blob == expected["resource"]["blob"]
 
         if result.structuredContent is not None and expected_structured_content is not None:
@@ -608,9 +646,7 @@ async def test_call_tool_grpc_transport_tool_timeout(grpc_server: grpc.aio.Serve
     transport = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     try:
         with pytest.raises(McpError) as e:
-            await transport.call_tool(
-                "blocking_tool", {}, read_timeout_seconds=timedelta(seconds=5)
-            )
+            await transport.call_tool("blocking_tool", {}, read_timeout_seconds=timedelta(seconds=5))
         assert e.value.error.code == types.REQUEST_TIMEOUT
         assert "Timed out" in e.value.error.message
         assert "CallTool" in e.value.error.message
@@ -631,6 +667,7 @@ async def test_call_tool_grpc_transport_failure(server_port: int) -> None:
     finally:
         await transport.close()
 
+
 @pytest.mark.anyio
 async def test_call_tool_non_existent_tool(grpc_server: grpc.aio.Server, server_port: int) -> None:
     """Test GRPCTransportSession.call_tool() with a non-existent tool name."""
@@ -646,6 +683,7 @@ async def test_call_tool_non_existent_tool(grpc_server: grpc.aio.Server, server_
     finally:
         await transport.close()
 
+
 @pytest.mark.anyio
 async def test_call_tool_empty_tool_name(grpc_server: grpc.aio.Server, server_port: int) -> None:
     """Test GRPCTransportSession.call_tool() with an empty tool name."""
@@ -660,6 +698,7 @@ async def test_call_tool_empty_tool_name(grpc_server: grpc.aio.Server, server_po
         assert "Tool '' not found" in content_block.text
     finally:
         await transport.close()
+
 
 @pytest.mark.anyio
 async def test_call_tool_invalid_arguments_missing(grpc_server: grpc.aio.Server, server_port: int) -> None:
@@ -680,6 +719,7 @@ async def test_call_tool_invalid_arguments_missing(grpc_server: grpc.aio.Server,
     finally:
         await transport.close()
 
+
 @pytest.mark.anyio
 async def test_call_tool_invalid_arguments_wrong_type(grpc_server: grpc.aio.Server, server_port: int) -> None:
     """Test GRPCTransportSession.call_tool() with arguments of the wrong type."""
@@ -699,6 +739,7 @@ async def test_call_tool_invalid_arguments_wrong_type(grpc_server: grpc.aio.Serv
     finally:
         await transport.close()
 
+
 @pytest.mark.anyio
 async def test_send_notification_cancel(grpc_server: grpc.aio.Server, server_port: int) -> None:
     """Test GRPCTransportSession.send_notification() for cancellation."""
@@ -713,7 +754,7 @@ async def test_send_notification_cancel(grpc_server: grpc.aio.Server, server_por
         )
 
         call_tool_task = asyncio.create_task(transport.call_tool("blocking_tool", {}))
-        await asyncio.sleep(0.2) # give call_tool time to start and populate _running_calls
+        await asyncio.sleep(0.2)  # give call_tool time to start and populate _running_calls
         await transport.send_notification(cancel_notification)
 
         with pytest.raises(McpError) as e:
@@ -730,15 +771,11 @@ async def test_call_tool_with_progress_callback(grpc_server: grpc.aio.Server, se
     transport = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     progress_data: list[tuple[float, float | None, str | None]] = []
 
-    async def progress_callback(
-        progress: float, total: float | None, message: str | None
-    ) -> None:
+    async def progress_callback(progress: float, total: float | None, message: str | None) -> None:
         progress_data.append((progress, total, message))
 
     try:
-        result = await transport.call_tool(
-            "progress_tool", {}, progress_callback=progress_callback
-        )
+        result = await transport.call_tool("progress_tool", {}, progress_callback=progress_callback)
         assert result is not None
         assert not result.isError
         content_block = result.content[0]
@@ -757,16 +794,12 @@ async def test_call_tool_with_non_int_token_progress(
     transport = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     progress_data: list[tuple[float, float | None, str | None]] = []
 
-    async def progress_callback(
-        progress: float, total: float | None, message: str | None
-    ) -> None:
+    async def progress_callback(progress: float, total: float | None, message: str | None) -> None:
         progress_data.append((progress, total, message))
 
     try:
         caplog.set_level(logging.WARNING)
-        result = await transport.call_tool(
-            "progress_tool_non_int_token", {}, progress_callback=progress_callback
-        )
+        result = await transport.call_tool("progress_tool_non_int_token", {}, progress_callback=progress_callback)
         assert result is not None
         assert not result.isError
         content_block = result.content[0]
@@ -777,6 +810,7 @@ async def test_call_tool_with_non_int_token_progress(
     finally:
         await transport.close()
 
+
 @pytest.mark.anyio
 async def test_read_resource_non_existent_uri(grpc_server: grpc.aio.Server, server_port: int) -> None:
     """Test GRPCTransportSession.read_resource() with a non-existent URI."""
@@ -785,9 +819,10 @@ async def test_read_resource_non_existent_uri(grpc_server: grpc.aio.Server, serv
         with pytest.raises(McpError) as e:
             await transport.read_resource(AnyUrl("test://nonexistent"))
         assert e.value.error.code == -32002  # types.NOT_FOUND
-        assert 'Resource test://nonexistent not found.' in e.value.error.message
+        assert "Resource test://nonexistent not found." in e.value.error.message
     finally:
         await transport.close()
+
 
 @pytest.mark.anyio
 async def test_read_resource_empty_uri(grpc_server: grpc.aio.Server, server_port: int) -> None:
@@ -797,6 +832,6 @@ async def test_read_resource_empty_uri(grpc_server: grpc.aio.Server, server_port
         with pytest.raises(McpError) as e:
             await transport.read_resource(cast(AnyUrl, ""))
         assert e.value.error.code == -32002  # types.NOT_FOUND
-        assert 'Resource  not found.' in e.value.error.message
+        assert "Resource  not found." in e.value.error.message
     finally:
         await transport.close()

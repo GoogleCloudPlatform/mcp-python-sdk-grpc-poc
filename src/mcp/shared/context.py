@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import Any, Generic
+from typing import TYPE_CHECKING, Any, Generic
 
-from typing_extensions import TypeVar, TYPE_CHECKING
+from typing_extensions import TypeVar
 
 from mcp.shared.session import BaseSession
 from mcp.types import RequestId, RequestParams
@@ -13,7 +13,10 @@ if TYPE_CHECKING:
     from mcp.client.transport_session import TransportSession as ClientTransportSession
     from mcp.server.transport_session import TransportSession as ServerTransportSession
 
-SessionT = TypeVar("SessionT", bound=BaseSession[Any, Any, Any, Any, Any] | "ClientTransportSession" | "ServerTransportSession")
+SessionT = TypeVar(
+    "SessionT", bound=BaseSession[Any, Any, Any, Any, Any] | "ClientTransportSession" | "ServerTransportSession"
+)
+
 
 @dataclass
 class RequestContext(Generic[SessionT, LifespanContextT, RequestT]):

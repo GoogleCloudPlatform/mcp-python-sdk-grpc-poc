@@ -9,7 +9,7 @@ import mcp.types as types
 
 
 class TransportSession(abc.ABC):
-    """Abstract base class for transport sessions. 
+    """Abstract base class for transport sessions.
     This abstract class needs to be implemented by all transport sessions on the server side.
     These APIs are exposed via the context object to the FastMCP server author.
     This is needed to send message from server to client via FastMCP context.

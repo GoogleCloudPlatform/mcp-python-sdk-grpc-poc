@@ -5,8 +5,10 @@ from __future__ import annotations as _annotations
 import inspect
 import re
 from collections.abc import AsyncIterator, Awaitable, Callable, Collection, Iterable, Sequence
+from concurrent.futures import Executor
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from typing import Any, Generic, Literal, Optional
+from typing import Any, Generic, Literal
+
 import anyio
 import pydantic_core
 from pydantic import BaseModel
@@ -19,7 +21,6 @@ from starlette.requests import Request
 from starlette.responses import Response
 from starlette.routing import Mount, Route
 from starlette.types import Receive, Scope, Send
-from concurrent.futures import Executor
 
 from mcp.server.auth.middleware.auth_context import AuthContextMiddleware
 from mcp.server.auth.middleware.bearer_auth import BearerAuthBackend, RequireAuthMiddleware
@@ -48,7 +49,6 @@ from mcp.types import PromptArgument as MCPPromptArgument
 from mcp.types import Resource as MCPResource
 from mcp.types import ResourceTemplate as MCPResourceTemplate
 from mcp.types import Tool as MCPTool
-from concurrent.futures import Executor
 
 logger = get_logger(__name__)
 
@@ -89,13 +89,13 @@ class Settings(BaseSettings, Generic[LifespanResultT]):
     # TODO(asheshvidyut): Implement proper type hints for gRPC settings.
     target: str
     grpc_enable_reflection: bool
-    grpc_migration_thread_pool: Optional[Executor]
-    grpc_handlers: Optional[Any]
-    grpc_interceptors: Optional[Sequence[Any]]
-    grpc_options: Optional[Any]
-    grpc_maximum_concurrent_rpcs: Optional[int]
-    grpc_compression: Optional[Any]
-    grpc_credentials: Optional[Any]
+    grpc_migration_thread_pool: Executor | None
+    grpc_handlers: Any | None
+    grpc_interceptors: Sequence[Any] | None
+    grpc_options: Any | None
+    grpc_maximum_concurrent_rpcs: int | None
+    grpc_compression: Any | None
+    grpc_credentials: Any | None
 
     # resource settings
     warn_on_duplicate_resources: bool
@@ -160,13 +160,13 @@ class FastMCP(Generic[LifespanResultT]):
         transport_security: TransportSecuritySettings | None = None,
         target: str = "127.0.0.1:50051",
         grpc_enable_reflection: bool = False,
-        grpc_migration_thread_pool: Optional[Executor] = None,
-        grpc_handlers: Optional[Sequence[Any]] = None,
-        grpc_interceptors: Optional[Sequence[Any]] = None,
-        grpc_options: Optional[Any] = None,
-        grpc_maximum_concurrent_rpcs: Optional[int] = None,
-        grpc_compression: Optional[Any] = None,
-        grpc_credentials: Optional[Any] = None,
+        grpc_migration_thread_pool: Executor | None = None,
+        grpc_handlers: Sequence[Any] | None = None,
+        grpc_interceptors: Sequence[Any] | None = None,
+        grpc_options: Any | None = None,
+        grpc_maximum_concurrent_rpcs: int | None = None,
+        grpc_compression: Any | None = None,
+        grpc_credentials: Any | None = None,
     ):
         self.settings = Settings(
             debug=debug,
@@ -295,8 +295,9 @@ class FastMCP(Generic[LifespanResultT]):
             case "grpc":
                 """Attach the FastMCP server with a gRPC server."""
                 from mcp.server.grpc import (  # pylint: disable=g-import-not-at-top
-                    attach_mcp_server_to_grpc_server, # type: ignore[attr-defined]
+                    attach_mcp_server_to_grpc_server,  # type: ignore[attr-defined]
                 )
+
                 attach_mcp_server_to_grpc_server(self, server)
             case "streamable-http":
                 raise ValueError("HTTP is not supported.")
@@ -339,13 +340,18 @@ class FastMCP(Generic[LifespanResultT]):
         during a request; outside a request, most methods will error.
         """
         try:
-            request_context: RequestContext[ServerSession, LifespanResultT, Request] | None = self._mcp_server.request_context
+            request_context: RequestContext[ServerSession, LifespanResultT, Request] | None = (
+                self._mcp_server.request_context
+            )
         except LookupError:
             request_context = None
         return Context[ServerSession, LifespanResultT, Request](request_context=request_context, fastmcp=self)
 
     async def call_tool(
-        self, name: str, arguments: dict[str, Any], request_context: RequestContext[ServerSession, LifespanResultT, Request] | None = None
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        request_context: RequestContext[ServerSession, LifespanResultT, Request] | None = None,
     ) -> Sequence[ContentBlock] | dict[str, Any]:
         """Call a tool by name with arguments."""
         if request_context:
@@ -737,11 +743,9 @@ class FastMCP(Generic[LifespanResultT]):
         """Run the server with gRPC transport."""
         # Imports are not at the top of file because grpc
         # is an optional dependency.
-        from mcp.server.grpc import create_mcp_grpc_server # pylint: disable=g-import-not-at-top
-        server = await create_mcp_grpc_server(
-            mcp_server=self,
-            target=self.settings.target
-        )
+        from mcp.server.grpc import create_mcp_grpc_server  # pylint: disable=g-import-not-at-top
+
+        server = await create_mcp_grpc_server(mcp_server=self, target=self.settings.target)
         try:
             await server.wait_for_termination()
         finally:

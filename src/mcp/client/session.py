@@ -1,31 +1,24 @@
-from datetime import timedelta
 import logging
+from datetime import timedelta
 from typing import Any
 
 import anyio.lowlevel
-from anyio.streams.memory import MemoryObjectReceiveStream
-from anyio.streams.memory import MemoryObjectSendStream
-from mcp.client.session_common import ElicitationFnT
-from mcp.client.session_common import ListRootsFnT
-from mcp.client.session_common import LoggingFnT
-from mcp.client.session_common import MessageHandlerFnT
-from mcp.client.session_common import SamplingFnT
+from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
+from pydantic import AnyUrl, TypeAdapter
+
+import mcp.types as types
+from mcp.client import session_common
+from mcp.client.session_common import ElicitationFnT, ListRootsFnT, LoggingFnT, MessageHandlerFnT, SamplingFnT
 from mcp.client.transport_session import TransportSession
 from mcp.shared.context import RequestContext
 from mcp.shared.message import SessionMessage
-from mcp.shared.session import BaseSession
-from mcp.shared.session import ProgressFnT
-from mcp.shared.session import RequestResponder
+from mcp.shared.session import BaseSession, ProgressFnT, RequestResponder
 from mcp.shared.version import SUPPORTED_PROTOCOL_VERSIONS
-import mcp.types as types
-from pydantic import AnyUrl
-from pydantic import TypeAdapter
-from mcp.client import session_common
-
 
 DEFAULT_CLIENT_INFO = types.Implementation(name="mcp", version=types.LATEST_PROTOCOL_VERSION)
 
 logger = logging.getLogger("client")
+
 
 async def _default_message_handler(
     message: RequestResponder[types.ServerRequest, types.ClientResult] | types.ServerNotification | Exception,
@@ -79,7 +72,7 @@ class ClientSession(
         types.ClientResult,
         types.ServerRequest,
         types.ServerNotification,
-    ]
+    ],
 ):
     def __init__(
         self,
@@ -292,7 +285,7 @@ class ClientSession(
 
         if name in self._tool_output_schemas:
             output_schema = self._tool_output_schemas.get(name)
-            await session_common.validate_tool_result(output_schema, name, result) # type: ignore[attr-defined]
+            await session_common.validate_tool_result(output_schema, name, result)  # type: ignore[attr-defined]
         else:
             logger.warning(f"Tool {name} not listed by server, cannot validate any structured content")
 

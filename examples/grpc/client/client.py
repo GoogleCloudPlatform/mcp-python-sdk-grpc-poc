@@ -5,15 +5,16 @@ This script demonstrates how to connect to and interact with the Simple gRPC Ser
 using the MCPClient class pattern with gRPC transport.
 """
 
+import argparse
+import asyncio
 import logging
 from datetime import timedelta
-from mcp.client.grpc_transport_session import GRPCTransportSession
-from mcp.types import CallToolRequestParams
+
 from mcp import McpError
-import asyncio
-import argparse
+from mcp.client.grpc_transport_session import GRPCTransportSession
 
 logging.basicConfig(level=logging.INFO)
+
 
 async def main(host="localhost", port=50051):
     """Run the client example using MCPClient class."""
@@ -68,7 +69,7 @@ async def main(host="localhost", port=50051):
 
         async def progress_callback(progress: float, total: float | None, message: str | None):
             if total:
-                print(f"Progress: {progress/total*100:.2f}% - {message}")
+                print(f"Progress: {progress / total * 100:.2f}% - {message}")
             else:
                 print(f"Progress: {progress} - {message}")
 
@@ -82,23 +83,17 @@ async def main(host="localhost", port=50051):
         print("-------------------------------------------\n")
 
         print("--- Calling tools with structured output ---")
-        weather = await session.call_tool(
-            "get_weather", {"city": "London"}
-        )
+        weather = await session.call_tool("get_weather", {"city": "London"})
         print(f"Weather in London: {weather}")
 
         print("-------------------------------------------\n")
         list_tools = await session.call_tool("list_tools")
         print(f"List Tools: {list_tools}")
 
-        location = await session.call_tool(
-            "get_location", {"address": "1600 Amphitheatre Parkway"}
-        )
+        location = await session.call_tool("get_location", {"address": "1600 Amphitheatre Parkway"})
         print(f"Location: {location}")
 
-        stats = await session.call_tool(
-            "get_statistics", {"data_type": "sales"}
-        )
+        stats = await session.call_tool("get_statistics", {"data_type": "sales"})
         print(f"Statistics: {stats}")
 
         user = await session.call_tool("get_user", {"user_id": "123"})
@@ -130,9 +125,7 @@ async def main(host="localhost", port=50051):
 
         print("--- Calling blocking_tool with 1s timeout ---")
         try:
-            result = await session.call_tool(
-                "blocking_tool", {}, read_timeout_seconds=timedelta(seconds=1)
-            )
+            result = await session.call_tool("blocking_tool", {}, read_timeout_seconds=timedelta(seconds=1))
             print(f"Result: {result}")
         except McpError as e:
             print(f"Caught expected timeout error: {e}")
@@ -146,23 +139,9 @@ async def main(host="localhost", port=50051):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="MCP gRPC Client with MCPClient Class"
-    )
-    parser.add_argument(
-        "--host",
-        default="localhost",
-        help="Server host (default: localhost)"
-    )
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=50051,
-        help="Server port (default: 50051)"
-    )
+    parser = argparse.ArgumentParser(description="MCP gRPC Client with MCPClient Class")
+    parser.add_argument("--host", default="localhost", help="Server host (default: localhost)")
+    parser.add_argument("--port", type=int, default=50051, help="Server port (default: 50051)")
     args = parser.parse_args()
 
-    asyncio.run(main(
-        host=args.host,
-        port=args.port
-    ))
+    asyncio.run(main(host=args.host, port=args.port))
