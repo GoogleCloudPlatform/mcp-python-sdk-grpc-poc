@@ -13,7 +13,6 @@ from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStre
 import mcp.types as types
 from mcp.client.session import (
     ClientSession,
-    TransportSession,
     ElicitationFnT,
     ListRootsFnT,
     LoggingFnT,
