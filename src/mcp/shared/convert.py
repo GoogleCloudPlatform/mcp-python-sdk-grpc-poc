@@ -6,15 +6,15 @@ import logging
 from collections.abc import AsyncGenerator
 from datetime import timedelta
 from typing import Any, Sequence, cast, Iterable, TypeAlias
-from pydantic import AnyUrl
 
 import jsonschema
 from google.protobuf import json_format
+from pydantic import AnyUrl
 
 from mcp.server.lowlevel.helper_types import ReadResourceContents
 
 from mcp import types
-from mcp.types import ErrorData
+from mcp.types import ErrorData, Role
 from mcp.shared.exceptions import McpError
 from mcp.proto import mcp_pb2
 from google.protobuf import duration_pb2
@@ -40,7 +40,7 @@ def resource_type_to_proto(resource: types.Resource) -> mcp_pb2.Resource:
   """Converts a types.Resource object to a Resource protobuf message."""
   proto_annotations = None
   if resource.annotations:
-    audience = []
+    audience: list[int] = []
     if resource.annotations.audience:
       for role in resource.annotations.audience:
         if role == "user":
@@ -76,7 +76,7 @@ def resource_proto_to_type(resource_proto: mcp_pb2.Resource) -> types.Resource:
     """Converts a Resource protobuf message to a types.Resource object."""
     annotations = None
     if resource_proto.HasField("annotations"):
-        audience: list[str] = []
+        audience: list[Role] = []
         for role in resource_proto.annotations.audience:
             if role == mcp_pb2.ROLE_USER:
                 audience.append("user")
@@ -88,7 +88,7 @@ def resource_proto_to_type(resource_proto: mcp_pb2.Resource) -> types.Resource:
         )
 
     return types.Resource(
-        uri=resource_proto.uri,
+        uri=AnyUrl(resource_proto.uri),
         name=resource_proto.name,
         title=resource_proto.title,
         description=resource_proto.description,
@@ -111,7 +111,7 @@ def resource_template_type_to_proto(
     """Converts a types.ResourceTemplate object to a ResourceTemplate protobuf message."""
     proto_annotations = None
     if resource_template.annotations:
-        audience = []
+        audience: list[int] = []
         if resource_template.annotations.audience:
             for role in resource_template.annotations.audience:
                 if role == "user":
@@ -141,7 +141,7 @@ def resource_template_types_to_protos(
     """Converts types.ResourceTemplate list to ResourceTemplate proto list."""
     # Keeping selected fields as proto does not have all the fields of
     # types.ResourceTemplate
-    typed_templates = []
+    typed_templates: list[types.ResourceTemplate] = []
     for t in resource_templates:
         typed_templates.append(
             types.ResourceTemplate(
@@ -164,7 +164,7 @@ def resource_template_proto_to_type(
     """Converts a ResourceTemplate protobuf message to a types.ResourceTemplate object."""
     annotations = None
     if resource_template_proto.HasField("annotations"):
-        audience: list[str] = []
+        audience: list[Role] = []
         for role in resource_template_proto.annotations.audience:
             if role == mcp_pb2.ROLE_USER:
                 audience.append("user")
@@ -258,7 +258,7 @@ def tool_type_to_proto(tool: types.Tool) -> mcp_pb2.Tool:
   # TODO(asheshvidyut): Add annotations once usecase is clear
   return mcp_pb2.Tool(
       name=tool.name,
-      title=tool.title or '',
+      title=tool.title,
       description=tool.description,
       input_schema=input_schema,
       output_schema=output_schema,
@@ -359,13 +359,13 @@ def proto_result_to_content(
       res_content = None
       if resource_contents.text:
         res_content = types.TextResourceContents(
-            uri=resource_contents.uri,
+            uri=AnyUrl(resource_contents.uri),
             mimeType=resource_contents.mime_type,
             text=resource_contents.text,
         )
       elif resource_contents.blob:
         res_content = types.BlobResourceContents(
-            uri=resource_contents.uri,
+            uri=AnyUrl(resource_contents.uri),
             mimeType=resource_contents.mime_type,
             blob=base64.b64encode(resource_contents.blob).decode("utf-8"),
         )
@@ -376,7 +376,7 @@ def proto_result_to_content(
     elif proto_result.HasField("resource_link"):
       content.append(types.ResourceLink(
           name=proto_result.resource_link.name,
-          type="resource_link", uri=proto_result.resource_link.uri
+          type="resource_link", uri=AnyUrl(proto_result.resource_link.uri)
       ))
   return types.CallToolResult(
       content=content,
