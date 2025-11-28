@@ -58,18 +58,18 @@ async def get_protocol_version_from_context(
   if protocol_version_str is None:
     supported_versions_str = ", ".join(supported_versions)
     await context.send_initial_metadata([(MCP_PROTOCOL_VERSION_KEY, version.LATEST_PROTOCOL_VERSION)])
-    context.abort(
+    await context.abort(
         grpc.StatusCode.UNIMPLEMENTED,
         f"Protocol version not provided. Supported versions are: {supported_versions_str}",
-    )
+    ) # type: ignore
 
   if protocol_version_str not in supported_versions:
     supported_versions_str = ", ".join(supported_versions)
     await context.send_initial_metadata([(MCP_PROTOCOL_VERSION_KEY, version.LATEST_PROTOCOL_VERSION)])
-    context.abort(
+    await context.abort(
         grpc.StatusCode.UNIMPLEMENTED,
         f"Unsupported protocol version: {protocol_version_str}. Supported versions are: {supported_versions_str}",
-    )
+    ) # type: ignore
   return protocol_version_str
 
 

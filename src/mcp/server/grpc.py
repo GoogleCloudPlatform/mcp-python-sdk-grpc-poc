@@ -72,11 +72,11 @@ class McpServicer(mcp_pb2_grpc.McpServicer):
       logger.error(
           "Error during ListResources: %s", error_message, exc_info=True
       )
-      context.abort(grpc.StatusCode.INVALID_ARGUMENT, error_message)
+      await context.abort(grpc.StatusCode.INVALID_ARGUMENT, error_message) # type: ignore
     except Exception as e:
       logger.error("Error during ListResources: %s", e, exc_info=True)
       # Send an INTERNAL error back to the client
-      context.abort(
+      await context.abort( # type: ignore
           grpc.StatusCode.INTERNAL, f"An internal error occurred: {e}"
       )
 
@@ -106,11 +106,11 @@ class McpServicer(mcp_pb2_grpc.McpServicer):
           error_message,
           exc_info=True,
       )
-      context.abort(grpc.StatusCode.INVALID_ARGUMENT, error_message)
+      await context.abort(grpc.StatusCode.INVALID_ARGUMENT, error_message) # type: ignore
     except Exception as e:
       logger.error("Error during ListResourceTemplates: %s", e, exc_info=True)
       # Send an INTERNAL error back to the client
-      context.abort(
+      await context.abort( # type: ignore
           grpc.StatusCode.INTERNAL, f"An internal error occurred: {e}"
       )
 
@@ -124,7 +124,7 @@ class McpServicer(mcp_pb2_grpc.McpServicer):
     try:
       contents = await self.mcp_server.read_resource(request.uri)
       if not contents:
-        context.abort(
+        await context.abort( # type: ignore
             grpc.StatusCode.NOT_FOUND,
             f"Resource {request.uri} not found.",
         )
@@ -143,13 +143,13 @@ class McpServicer(mcp_pb2_grpc.McpServicer):
       )
     except ValueError as e:
         logger.error("Error during ReadResource: %s", e, exc_info=True)
-        context.abort(
+        await context.abort( # type: ignore
             grpc.StatusCode.NOT_FOUND, f"Resource not found: {e}"
         )
     except Exception as e:
       logger.error("Error during ReadResource: %s", e, exc_info=True)
       # Send an INTERNAL error back to the client
-      context.abort(
+      await context.abort( # type: ignore
           grpc.StatusCode.INTERNAL, f"An internal error occurred: {e}"
       )
 
@@ -175,13 +175,13 @@ class McpServicer(mcp_pb2_grpc.McpServicer):
     except json_format.ParseError as e:
       error_message = f"Failed to parse tool data: {e}"
       logger.error("Error during ListTools: %s", error_message, exc_info=True)
-      context.abort(
+      await context.abort( # type: ignore
           grpc.StatusCode.INVALID_ARGUMENT, error_message
       )
     except Exception as e:
       logger.error("Error during ListTools: %s", e, exc_info=True)
       # Send an INTERNAL error back to the client
-      context.abort(
+      await context.abort( # type: ignore
           grpc.StatusCode.INTERNAL, f"An internal error occurred: {e}"
       )
 
