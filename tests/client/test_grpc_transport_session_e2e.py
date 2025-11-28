@@ -111,7 +111,7 @@ def setup_test_server(port: int) -> FastMCP:
       )
 
     @mcp.tool()
-    def get_untyped_object() -> dict[str, str]:
+    def get_untyped_object() -> dict: # type: ignore
         class UntypedObject:
             def __str__(self) -> str:
                 return "UntypedObject()"
