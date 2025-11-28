@@ -1,4 +1,4 @@
-This project is a fork of https://github.com/modelcontextprotocol/python-sdk that adds
+This project is a fork of <https://github.com/modelcontextprotocol/python-sdk> that adds
 support for the gRPC transport described in
 [SEP-1352](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1352).
 This is a proof-of-concept (POC) in support of that SEP.
@@ -11,7 +11,7 @@ SDK, in which case would also abandon this fork.  However, if we can't make eith
 of those options work, then we will continue to maintain this fork, periodically
 syncing changes from the upstream SDK.
 
-See also the README from the upstream SDK at https://github.com/modelcontextprotocol/python-sdk/blob/main/README.md.
+See also the README from the upstream SDK at <https://github.com/modelcontextprotocol/python-sdk/blob/main/README.md>.
 
 ### gRPC Transport
 
@@ -39,23 +39,23 @@ See also the README from the upstream SDK at https://github.com/modelcontextprot
 
 The following documentation files have been added to the `docs` folder:
 
-*   [`grpc_docs/version_negotiation.md`](grpc_docs/version_negotiation.md): Documentation on version negotiation.
-*   [`grpc_docs/timeout.md`](grpc_docs/timeout.md): Documentation on handling timeouts.
-*   [`grpc_docs/tll_notification.md`](grpc_docs/tll_notification.md): Documentation on TTL and expiry change notification.
+* [`grpc_docs/version_negotiation.md`](grpc_docs/version_negotiation.md): Documentation on version negotiation.
+* [`grpc_docs/timeout.md`](grpc_docs/timeout.md): Documentation on handling timeouts.
+* [`grpc_docs/tll_notification.md`](grpc_docs/tll_notification.md): Documentation on TTL and expiry change notification.
 
 ## New Files
 
 The major new files introduced for gRPC transport are:
 
-*   `mcp/server/grpc.py`: Contains the gRPC server implementation.
-*   `mcp/client/grpc_transport_session.py`: Contains the gRPC client transport session.
+* `mcp/server/grpc.py`: Contains the gRPC server implementation.
+* `mcp/client/grpc_transport_session.py`: Contains the gRPC client transport session.
 
 ### Other New Files
 
-*   `mcp/utils/convert.py`: Provides utility functions for converting between different data formats.
-*   `mcp/utils/grpc_utils.py`: Contains gRPC-specific utility functions.
-*   `mcp/server/grpc_session.py`: Defines the session object for gRPC tool calls.
-*   `examples/`: This directory contains example implementations for both gRPC and HTTP transports, including server and client examples.
+* `mcp/utils/convert.py`: Provides utility functions for converting between different data formats.
+* `mcp/utils/grpc_utils.py`: Contains gRPC-specific utility functions.
+* `mcp/server/grpc_session.py`: Defines the session object for gRPC tool calls.
+* `examples/`: This directory contains example implementations for both gRPC and HTTP transports, including server and client examples.
 
 ## Protocol Definition
 
@@ -81,16 +81,18 @@ def my_tool(param: str) -> str:
 
 mcp.run(transport="grpc")
 ```
+
 All options that a `grpc.aio.Server` takes can be given to the `FastMCP` server as settings when initializing `FastMCP`. These settings include:
--   `target`: The address the gRPC server will listen on.
--   `grpc_enable_reflection`: Whether to enable gRPC reflection.
--   `grpc_migration_thread_pool`: Executor for gRPC migration.
--   `grpc_handlers`: Custom gRPC handlers.
--   `grpc_interceptors`: gRPC interceptors to apply.
--   `grpc_options`: Additional gRPC channel options.
--   `grpc_maximum_concurrent_rpcs`: Maximum number of concurrent RPCs.
--   `grpc_compression`: gRPC compression algorithm.
--   `grpc_credentials`: Credentials for secure gRPC channels.
+
+* `target`: The address the gRPC server will listen on.
+* `grpc_enable_reflection`: Whether to enable gRPC reflection.
+* `grpc_migration_thread_pool`: Executor for gRPC migration.
+* `grpc_handlers`: Custom gRPC handlers.
+* `grpc_interceptors`: gRPC interceptors to apply.
+* `grpc_options`: Additional gRPC channel options.
+* `grpc_maximum_concurrent_rpcs`: Maximum number of concurrent RPCs.
+* `grpc_compression`: gRPC compression algorithm.
+* `grpc_credentials`: Credentials for secure gRPC channels.
 
 #### HTTP Server
 

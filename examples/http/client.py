@@ -1,7 +1,9 @@
 import asyncio
 from datetime import timedelta
+
 from mcp.client.session import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
+
 
 async def main():
     async with streamablehttp_client(
@@ -11,7 +13,6 @@ async def main():
         sse_read_timeout=timedelta(minutes=5),
         terminate_on_close=True,  # Send DELETE on close
     ) as (read_stream, write_stream, get_session_id):
-
         async with ClientSession(read_stream, write_stream) as session:
             await session.initialize()
             session_id = get_session_id()
@@ -63,7 +64,7 @@ async def main():
 
             async def progress_callback(progress: float, total: float | None, message: str | None):
                 if total:
-                    print(f"Progress: {progress/total*100:.2f}% - {message}")
+                    print(f"Progress: {progress / total * 100:.2f}% - {message}")
                 else:
                     print(f"Progress: {progress} - {message}")
 
@@ -77,19 +78,13 @@ async def main():
             print("-------------------------------------------\n")
 
             print("--- Calling tools with structured output ---")
-            weather = await session.call_tool(
-                "get_weather", {"city": "London"}
-            )
+            weather = await session.call_tool("get_weather", {"city": "London"})
             print(f"Weather in London: {weather}")
 
-            location = await session.call_tool(
-                "get_location", {"address": "1600 Amphitheatre Parkway"}
-            )
+            location = await session.call_tool("get_location", {"address": "1600 Amphitheatre Parkway"})
             print(f"Location: {location}")
 
-            stats = await session.call_tool(
-                "get_statistics", {"data_type": "sales"}
-            )
+            stats = await session.call_tool("get_statistics", {"data_type": "sales"})
             print(f"Statistics: {stats}")
 
             user = await session.call_tool("get_user", {"user_id": "123"})
@@ -121,6 +116,7 @@ async def main():
             result = await session.call_tool("get_image")
             print(f"Result: {result}")
             print("--------------------------------------------\n")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

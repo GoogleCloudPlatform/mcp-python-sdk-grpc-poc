@@ -8,10 +8,10 @@ import anyio
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 
 import mcp.types as types
+from mcp.client.grpc_transport_session import GRPCTransportSession
 from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
 from mcp.client.stdio import StdioServerParameters, stdio_client
-from mcp.client.grpc_transport_session import GRPCTransportSession
 from mcp.shared.message import SessionMessage
 from mcp.shared.session import RequestResponder
 
@@ -62,8 +62,8 @@ async def main(command_or_url: str, args: list[str], env: list[tuple[str, str]])
         # Use gRPC session if scheme is "grpc://" or if it looks like a host:port.
         target = parsed_url.netloc if parsed_url.scheme == "grpc" else command_or_url
         if not target:
-             logger.error("Invalid gRPC target: %s", command_or_url)
-             return
+            logger.error("Invalid gRPC target: %s", command_or_url)
+            return
         session = GRPCTransportSession(target=target)
         logger.info("Initializing gRPC session to %s", target)
         try:
@@ -80,9 +80,14 @@ async def main(command_or_url: str, args: list[str], env: list[tuple[str, str]])
         async with stdio_client(server_parameters) as streams:
             await run_session(*streams)
 
+
 def cli():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command_or_url", help="Command or URL to connect to (e.g., http://..., https://..., grpc://host:port, host:port for gRPC, or a command)")
+    parser.add_argument(
+        "command_or_url",
+        help="Command or URL to connect to "
+        + "(e.g., http://..., https://..., grpc://host:port, host:port for gRPC, or a command)",
+    )
     parser.add_argument("args", nargs="*", help="Additional arguments")
     parser.add_argument(
         "-e",

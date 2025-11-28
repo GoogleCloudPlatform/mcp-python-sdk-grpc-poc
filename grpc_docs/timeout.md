@@ -36,12 +36,11 @@ if __name__ == "__main__":
     asyncio.run(list_tools_with_timeout())
 ```
 
-
 ### How Timeouts are Handled
 
 When a timeout is set, the gRPC client will automatically cancel the RPC if the response is not received within the specified duration. This results in an exception being raised on the client side. The specific exception you might encounter is:
 
-*   `mcp.shared.exceptions.McpError` with a code of `mcp.types.REQUEST_TIMEOUT`: This is raised when the gRPC call exceeds the deadline, originating from a `grpc.RpcError` with `grpc.StatusCode.DEADLINE_EXCEEDED`.
+* `mcp.shared.exceptions.McpError` with a code of `mcp.types.REQUEST_TIMEOUT`: This is raised when the gRPC call exceeds the deadline, originating from a `grpc.RpcError` with `grpc.StatusCode.DEADLINE_EXCEEDED`.
 
 ## 3. Configuration
 

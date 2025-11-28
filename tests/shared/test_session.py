@@ -5,7 +5,6 @@ import anyio
 import pytest
 
 import mcp.types as types
-from mcp.client.session import TransportSession
 from mcp.client.session import ClientSession
 from mcp.server.lowlevel.server import Server
 from mcp.shared.exceptions import McpError
@@ -28,14 +27,14 @@ def mcp_server() -> Server:
 @pytest.fixture
 async def client_connected_to_server(
     mcp_server: Server,
-) -> AsyncGenerator[TransportSession, None]:
+) -> AsyncGenerator[ClientSession, None]:
     async with create_connected_server_and_client_session(mcp_server) as client_session:
         yield client_session
 
 
 @pytest.mark.anyio
 async def test_in_flight_requests_cleared_after_completion(
-    client_connected_to_server: TransportSession,
+    client_connected_to_server: ClientSession,
 ):
     """Verify that _in_flight is empty after all requests complete."""
     # Send a request and wait for response
@@ -83,7 +82,7 @@ async def test_request_cancellation():
 
         return server
 
-    async def make_request(client_session: TransportSession):
+    async def make_request(client_session: ClientSession):
         nonlocal ev_cancelled
         try:
             await client_session.send_request(
@@ -138,7 +137,7 @@ async def test_connection_closed():
         client_read, client_write = client_streams
         server_read, server_write = server_streams
 
-        async def make_request(client_session: TransportSession):
+        async def make_request(client_session: ClientSession):
             """Send a request in a separate task"""
             nonlocal ev_response
             try:

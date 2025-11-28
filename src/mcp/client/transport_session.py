@@ -1,7 +1,5 @@
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from datetime import timedelta
-
 from typing import Any
 
 from pydantic import AnyUrl
@@ -19,7 +17,7 @@ class TransportSession(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def send_ping(self):
+    async def send_ping(self) -> types.EmptyResult:
         """Send a ping request."""
         raise NotImplementedError
 
