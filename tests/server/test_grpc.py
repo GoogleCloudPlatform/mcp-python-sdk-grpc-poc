@@ -121,7 +121,7 @@ def setup_test_server(port: int, test_dir: Path) -> FastMCP:
     @mcp.tool()
     def dict_tool() -> dict: # type: ignore
         """A tool that returns a dict."""
-        return {"key": "value"}
+        return {"key": "value"} # type: ignore
 
     class DictOutput(BaseModel):
         key: str
