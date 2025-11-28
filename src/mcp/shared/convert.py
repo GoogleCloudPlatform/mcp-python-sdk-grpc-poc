@@ -302,7 +302,7 @@ def _populate_content_from_content_block(
           resource_contents.blob
       )
       return True
-  else:  # isinstance(content_block, types.ResourceLink)
+  elif isinstance(content_block, types.ResourceLink):  # type: ignore
     result.resource_link.uri = str(content_block.uri)
     if content_block.name:
       result.resource_link.name = content_block.name
