@@ -119,7 +119,7 @@ def setup_test_server(port: int, test_dir: Path) -> FastMCP:
         return ["one", "two"]
 
     @mcp.tool()
-    def dict_tool() -> dict[str, str]:
+    def dict_tool() -> dict: # type: ignore
         """A tool that returns a dict."""
         return {"key": "value"}
 
