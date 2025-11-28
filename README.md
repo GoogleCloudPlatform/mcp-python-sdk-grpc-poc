@@ -83,6 +83,7 @@ mcp.run(transport="grpc")
 ```
 
 All options that a `grpc.aio.Server` takes can be given to the `FastMCP` server as settings when initializing `FastMCP`. These settings include:
+
 * `target`: The address the gRPC server will listen on.
 * `grpc_enable_reflection`: Whether to enable gRPC reflection.
 * `grpc_migration_thread_pool`: Executor for gRPC migration.
