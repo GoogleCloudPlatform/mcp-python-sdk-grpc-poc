@@ -88,7 +88,7 @@ def resource_proto_to_type(resource_proto: mcp_pb2.Resource) -> types.Resource:
         )
 
     return types.Resource(
-        uri=AnyUrl(resource_proto.uri),
+        uri=resource_proto.uri,
         name=resource_proto.name,
         title=resource_proto.title,
         description=resource_proto.description,
@@ -176,7 +176,7 @@ def resource_template_proto_to_type(
         )
 
     return types.ResourceTemplate(
-        uriTemplate=AnyUrl(resource_template_proto.uri_template),
+        uriTemplate=resource_template_proto.uri_template,
         name=resource_template_proto.name,
         title=resource_template_proto.title,
         description=resource_template_proto.description,
@@ -359,13 +359,13 @@ def proto_result_to_content(
       res_content = None
       if resource_contents.text:
         res_content = types.TextResourceContents(
-            uri=AnyUrl(resource_contents.uri),
+            uri=resource_contents.uri,
             mimeType=resource_contents.mime_type,
             text=resource_contents.text,
         )
       elif resource_contents.blob:
         res_content = types.BlobResourceContents(
-            uri=AnyUrl(resource_contents.uri),
+            uri=resource_contents.uri,
             mimeType=resource_contents.mime_type,
             blob=base64.b64encode(resource_contents.blob).decode("utf-8"),
         )
@@ -376,7 +376,7 @@ def proto_result_to_content(
     elif proto_result.HasField("resource_link"):
       content.append(types.ResourceLink(
           name=proto_result.resource_link.name,
-          type="resource_link", uri=AnyUrl(proto_result.resource_link.uri)
+          type="resource_link", uri=proto_result.resource_link.uri
       ))
   return types.CallToolResult(
       content=content,
