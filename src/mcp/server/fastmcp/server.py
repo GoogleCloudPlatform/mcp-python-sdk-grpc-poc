@@ -197,7 +197,7 @@ class FastMCP(Generic[LifespanResultT]):
             grpc_credentials=grpc_credentials,
         )
 
-        self._mcp_server: FastMCP = MCPServer(
+        self._mcp_server: MCPServer[LifespanResultT, Request] = MCPServer(
             name=name or "FastMCP",
             instructions=instructions,
             # TODO(Marcelo): It seems there's a type mismatch between the lifespan type from an FastMCP and Server.
