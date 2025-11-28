@@ -14,7 +14,7 @@ Thank you for your interest in contributing to the MCP Python SDK! This document
 uv sync --frozen --all-extras --dev
 ```
 
-6. Set up pre-commit hooks:
+1. Set up pre-commit hooks:
 
 ```bash
 uv tool install pre-commit --with pre-commit-uv --force-reinstall
@@ -37,32 +37,32 @@ uv tool install pre-commit --with pre-commit-uv --force-reinstall
 uv run pytest
 ```
 
-5. Run type checking:
+1. Run type checking:
 
 ```bash
 uv run pyright
 ```
 
-6. Run linting:
+1. Run linting:
 
 ```bash
 uv run ruff check .
 uv run ruff format .
 ```
 
-7. Update README snippets if you modified example code:
+1. Update README snippets if you modified example code:
 
 ```bash
 uv run scripts/update_readme_snippets.py
 ```
 
-8. (Optional) Run pre-commit hooks on all files:
+1. (Optional) Run pre-commit hooks on all files:
 
 ```bash
 pre-commit run --all-files
 ```
 
-9. Submit a pull request to the same branch you branched from
+1. Submit a pull request to the same branch you branched from
 
 ## Code Style
 
