@@ -356,10 +356,6 @@ async def create_mcp_grpc_server(
         compression=mcp_server.settings.grpc_compression,
     )
 
-    # Cast aio.Server to grpc.Server to satisfy the type checker.
-    # This is safe because aio.Server implements the necessary interface for
-    # add_McpServicer_to_server, even though the type hint doesn't reflect it.
-    # The underlying implementation of add_McpServicer_to_server handles both.
     attach_mcp_server_to_grpc_server(mcp_server, server)  # type: ignore
 
     # Configure server port
