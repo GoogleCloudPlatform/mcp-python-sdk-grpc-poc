@@ -22,7 +22,7 @@ def check_protocol_version_from_metadata(func: F) -> F:
   """
 
   @functools.wraps(func)
-  async def async_wrapper(self, request, context, *args, **kwargs):
+  async def async_wrapper(self: Any, request: Any, context: aio.ServicerContext[Any, Any], *args: Any, **kwargs: Any):
     protocol_version_str = await get_protocol_version_from_context(context, version.SUPPORTED_PROTOCOL_VERSIONS)
     if protocol_version_str in version.SUPPORTED_PROTOCOL_VERSIONS:
       await context.send_initial_metadata([
@@ -31,7 +31,7 @@ def check_protocol_version_from_metadata(func: F) -> F:
     return await func(self, request, context, *args, **kwargs)
 
   @functools.wraps(func)
-  async def async_generator_wrapper(self, request, context, *args, **kwargs):
+  async def async_generator_wrapper(self: Any, request: Any, context: aio.ServicerContext[Any, Any], *args: Any, **kwargs: Any):
     protocol_version_str = await get_protocol_version_from_context(context, version.SUPPORTED_PROTOCOL_VERSIONS)
     if protocol_version_str in version.SUPPORTED_PROTOCOL_VERSIONS:
       await context.send_initial_metadata([
@@ -49,7 +49,7 @@ def check_protocol_version_from_metadata(func: F) -> F:
 
 
 async def get_protocol_version_from_context(
-    context: aio.ServicerContext, supported_versions: str
+    context: aio.ServicerContext[Any, Any], supported_versions: list[str]
 ) -> str:
   """Extracts and validates the protocol version from gRPC metadata, canceling the RPC if invalid."""
   metadata = context.invocation_metadata()
@@ -74,7 +74,7 @@ async def get_protocol_version_from_context(
 
 
 def get_metadata_value(
-    metadata: tuple[tuple[str, str | bytes], ...], key: str
+    metadata: grpc.aio.Metadata | None, key: str
 ) -> str | None:
     """Extracts a value from gRPC metadata by key."""
     if metadata:
