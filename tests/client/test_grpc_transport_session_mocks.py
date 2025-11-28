@@ -437,13 +437,12 @@ async def test_read_resource_grpc_transport_text(grpc_server: None, server_port:
             read_resource_response.resource = [mock.MagicMock(uri="test://resource", mime_type="text/plain", text="test resource content", blob=None)]
             read_resource_mock.return_value = read_resource_response
             transport.grpc_stub.ReadResource = read_resource_mock
-
             read_resource_result = await transport.read_resource(AnyUrl("test://resource"))
             assert read_resource_result is not None
             transport.list_resources.assert_not_called()  # type: ignore
         assert len(read_resource_result.contents) == 1
         content = read_resource_result.contents[0]
-        assert isinstance(content, types.TextContent)
+        assert isinstance(content, types.TextResourceContents)
         assert content.text == "test resource content"
         assert content.mimeType == "text/plain"
     finally:
