@@ -3,30 +3,24 @@ from datetime import timedelta
 from unittest import mock
 import grpc
 import pytest
-import time
 import unittest.mock
 
 from mcp.proto import mcp_pb2, mcp_pb2_grpc
 from mcp.shared import version
-from google.protobuf import struct_pb2
 
+import grpc.aio as aio
 from mcp.client.grpc_transport_session import GRPCTransportSession
 from mcp.client.cache import CacheEntry
-from mcp.client import session_common
 from mcp.shared.exceptions import McpError
 from mcp import types
 
 # Fixtures from test_grpc_transport_session.py
 import socket
-from collections.abc import Generator
-from mcp.server.fastmcp.server import Context, FastMCP
+from collections.abc import AsyncGenerator
+from mcp.server.fastmcp.server import FastMCP
 from mcp.server.grpc import create_mcp_grpc_server
 from mcp import types
-from io import BytesIO
-from PIL import Image as PILImage
-import base64
-from pydantic import BaseModel
-from jsonschema import ValidationError
+from typing import Any
 
 
 def setup_test_server(port: int) -> FastMCP:
@@ -49,7 +43,7 @@ def server_port() -> int:
 
 
 @pytest.fixture
-async def grpc_server(server_port: int) -> Generator[None, None, None]:
+async def grpc_server(server_port: int) -> AsyncGenerator[aio.Server | Any, Any]:
     """Start a gRPC server in process."""
     server_instance = setup_test_server(server_port)
     server = await create_mcp_grpc_server(
@@ -77,7 +71,7 @@ def _create_mock_tool_proto(name: str):
 
 
 class MockAsyncStream:
-    def __init__(self, items):
+    def __init__(self, items: list[Any]):
         self._items = items
         self._iterator = iter(items)
 

@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 from pydantic import BaseModel, Field
 
-from mcp.client.session import TransportSession, ElicitationFnT
+from mcp.client.session import ClientSession, ElicitationFnT
 from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.session import ServerSession
 from mcp.shared.context import RequestContext
@@ -71,7 +71,7 @@ async def test_stdio_elicitation():
     create_ask_user_tool(mcp)
 
     # Create a custom handler for elicitation requests
-    async def elicitation_callback(context: RequestContext[TransportSession, None], params: ElicitRequestParams):
+    async def elicitation_callback(context: RequestContext[ClientSession, None], params: ElicitRequestParams):
         if params.message == "Tool wants to ask: What is your name?":
             return ElicitResult(action="accept", content={"answer": "Test User"})
         else:
@@ -88,7 +88,7 @@ async def test_stdio_elicitation_decline():
     mcp = FastMCP(name="StdioElicitationDeclineServer")
     create_ask_user_tool(mcp)
 
-    async def elicitation_callback(context: RequestContext[TransportSession, None], params: ElicitRequestParams):
+    async def elicitation_callback(context: RequestContext[ClientSession, None], params: ElicitRequestParams):
         return ElicitResult(action="decline")
 
     await call_tool_and_assert(
@@ -126,7 +126,7 @@ async def test_elicitation_schema_validation():
     create_validation_tool("nested_model", InvalidNestedSchema)
 
     # Dummy callback (won't be called due to validation failure)
-    async def elicitation_callback(context: RequestContext[TransportSession, None], params: ElicitRequestParams):
+    async def elicitation_callback(context: RequestContext[ClientSession, None], params: ElicitRequestParams):
         return ElicitResult(action="accept", content={})
 
     async with create_connected_server_and_client_session(
@@ -184,7 +184,7 @@ async def test_elicitation_with_optional_fields():
     ]
 
     for content, expected in test_cases:
-        async def callback(context: RequestContext[TransportSession, None], params: ElicitRequestParams):
+        async def callback(context: RequestContext[ClientSession, None], params: ElicitRequestParams):
             return ElicitResult(action="accept", content=content)
 
         await call_tool_and_assert(mcp, callback, "optional_tool", {}, expected)
@@ -202,7 +202,7 @@ async def test_elicitation_with_optional_fields():
         except TypeError as e:
             return f"Validation failed: {str(e)}"
 
-    async def elicitation_callback(context: RequestContext[TransportSession, None], params: ElicitRequestParams):
+    async def elicitation_callback(context: RequestContext[ClientSession, None], params: ElicitRequestParams):
         return ElicitResult(action="accept", content={})
 
     await call_tool_and_assert(
