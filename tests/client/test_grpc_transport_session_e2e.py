@@ -115,7 +115,7 @@ def setup_test_server(port: int) -> FastMCP:
         class UntypedObject:
             def __str__(self) -> str:
                 return "UntypedObject()"
-        return {"result": str(UntypedObject())}
+        return {"result": str(UntypedObject())} # type: ignore
 
     @mcp.tool()
     async def progress_tool(ctx: Context[Any, Any, Any]) -> str:
