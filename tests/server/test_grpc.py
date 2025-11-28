@@ -527,7 +527,6 @@ async def test_list_tools_grpc(grpc_server: None, grpc_stub: "McpAsyncStub"):
         assert tool.name == expected_tool["name"]
         assert tool.description == expected_tool["description"]
         assert json_format.MessageToDict(tool.input_schema) == expected_tool["inputSchema"]
-        print(f"Tool: {tool_name}, Actual: {json_format.MessageToDict(tool.output_schema)}, Expected: {expected_tool['outputSchema']}")
         assert json_format.MessageToDict(tool.output_schema) == expected_tool["outputSchema"]
 
 
