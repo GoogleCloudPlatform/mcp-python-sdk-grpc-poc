@@ -434,7 +434,7 @@ async def test_read_resource_grpc_transport_text(grpc_server: None, server_port:
             )
             read_resource_mock = mock.AsyncMock()
             read_resource_response = mock.MagicMock()
-            read_resource_response.resource = [mock.MagicMock(uri="test://resource", mime_type="text/plain", text="test resource content")]
+            read_resource_response.resource = [mock.MagicMock(uri="test://resource", mime_type="text/plain", text="test resource content", blob=None)]
             read_resource_mock.return_value = read_resource_response
             transport.grpc_stub.ReadResource = read_resource_mock
 
