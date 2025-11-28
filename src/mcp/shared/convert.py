@@ -1,5 +1,5 @@
 """Utilities for converting between MCP types and protobuf messages."""
-# ruff: noqa: I001 
+# ruff: noqa: I001
 
 import base64
 import json
