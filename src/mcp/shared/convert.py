@@ -48,7 +48,7 @@ def resource_type_to_proto(resource: types.Resource) -> mcp_pb2.Resource:
         elif role == "assistant":
           audience.append(mcp_pb2.ROLE_ASSISTANT)
     proto_annotations = mcp_pb2.Annotations(
-        audience=audience,
+        audience=audience, # type: ignore
         priority=resource.annotations.priority
         if resource.annotations.priority is not None
         else 0.0,
@@ -119,7 +119,7 @@ def resource_template_type_to_proto(
                 elif role == "assistant":
                     audience.append(mcp_pb2.ROLE_ASSISTANT)
         proto_annotations = mcp_pb2.Annotations(
-            audience=audience,
+            audience=audience, # type: ignore
             priority=resource_template.annotations.priority
             if resource_template.annotations.priority is not None
             else 0.0,
