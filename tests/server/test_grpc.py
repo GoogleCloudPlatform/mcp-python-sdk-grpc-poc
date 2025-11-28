@@ -1,6 +1,6 @@
 import asyncio
 import socket
-from collections.abc import Generator, AsyncGenerator
+from collections.abc import AsyncGenerator
 from typing import Any
 import json
 from pathlib import Path
@@ -18,10 +18,21 @@ from mcp.server.fastmcp.server import FastMCP
 from mcp.server.grpc import create_mcp_grpc_server
 from mcp.shared.exceptions import McpError
 from mcp.shared import version
-from typing import TYPE_CHECKING, cast
+from typing import cast, Protocol, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from mcp.proto.mcp_pb2_grpc import McpAsyncStub
+    class McpAsyncStub(Protocol):
+        def __init__(self, channel: grpc.aio.Channel) -> None: ...
+        ListResources: grpc.aio.UnaryUnaryMultiCallable[mcp_pb2.ListResourcesRequest, mcp_pb2.ListResourcesResponse]
+        ReadResource: grpc.aio.UnaryUnaryMultiCallable[mcp_pb2.ReadResourceRequest, mcp_pb2.ReadResourceResponse]
+        ListResourceTemplates: grpc.aio.UnaryUnaryMultiCallable[mcp_pb2.ListResourceTemplatesRequest, mcp_pb2.ListResourceTemplatesResponse]
+        ListPrompts: grpc.aio.UnaryUnaryMultiCallable[mcp_pb2.ListPromptsRequest, mcp_pb2.ListPromptsResponse]
+        GetPrompt: grpc.aio.UnaryUnaryMultiCallable[mcp_pb2.GetPromptRequest, mcp_pb2.GetPromptResponse]
+        ListTools: grpc.aio.UnaryUnaryMultiCallable[mcp_pb2.ListToolsRequest, mcp_pb2.ListToolsResponse]
+        CallTool: grpc.aio.StreamStreamMultiCallable[mcp_pb2.CallToolRequest, mcp_pb2.CallToolResponse]
+        Complete: grpc.aio.UnaryUnaryMultiCallable[mcp_pb2.CompletionRequest, mcp_pb2.CompletionResponse]
+
+
 
 
 def setup_test_server(port: int, test_dir: Path) -> FastMCP:
@@ -108,7 +119,7 @@ def setup_test_server(port: int, test_dir: Path) -> FastMCP:
         return ["one", "two"]
 
     @mcp.tool()
-    def dict_tool() -> dict:
+    def dict_tool() -> dict[str, str]:
         """A tool that returns a dict."""
         return {"key": "value"}
 
@@ -516,6 +527,7 @@ async def test_list_tools_grpc(grpc_server: None, grpc_stub: "McpAsyncStub"):
         assert tool.name == expected_tool["name"]
         assert tool.description == expected_tool["description"]
         assert json_format.MessageToDict(tool.input_schema) == expected_tool["inputSchema"]
+        print(f"Tool: {tool_name}, Actual: {json_format.MessageToDict(tool.output_schema)}, Expected: {expected_tool['outputSchema']}")
         assert json_format.MessageToDict(tool.output_schema) == expected_tool["outputSchema"]
 
 
