@@ -795,7 +795,7 @@ async def test_read_resource_empty_uri(grpc_server: grpc.aio.Server, server_port
     transport = GRPCTransportSession(target=f"127.0.0.1:{server_port}")
     try:
         with pytest.raises(McpError) as e:
-            await transport.read_resource("")
+            await transport.read_resource(cast(AnyUrl, ""))
         assert e.value.error.code == -32002  # types.NOT_FOUND
         assert 'Resource  not found.' in e.value.error.message
     finally:

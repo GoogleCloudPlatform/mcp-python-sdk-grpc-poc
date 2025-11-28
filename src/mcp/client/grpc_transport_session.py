@@ -30,6 +30,7 @@ from mcp.types import ErrorData
 from pydantic import AnyUrl
 
 
+
 LATEST_PROTOCOL_VERSION = types.LATEST_PROTOCOL_VERSION
 logger = logging.getLogger(__name__)
 
