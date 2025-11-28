@@ -5,7 +5,7 @@ import functools
 import grpc
 from grpc import aio
 from mcp.shared import version
-from typing import Any
+from typing import Any, Callable, TypeVar, cast
 
 
 MCP_PROTOCOL_VERSION_KEY = "mcp-protocol-version"
@@ -13,7 +13,10 @@ MCP_TOOL_NAME_KEY = "mcp-tool-name"
 MCP_RESOURCE_URI_KEY = "mcp-resource-uri"
 
 
-def check_protocol_version_from_metadata(func):
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def check_protocol_version_from_metadata(func: F) -> F:
   """Decorator to check protocol version from metadata for gRPC methods.
   It aborts the RPC if the protocol version is not provided or is not supported.
   """
@@ -38,9 +41,9 @@ def check_protocol_version_from_metadata(func):
       yield item
 
   if asyncio.iscoroutinefunction(func):
-    return async_wrapper
+    return cast(F, async_wrapper)
   else:
-    return async_generator_wrapper
+    return cast(F, async_generator_wrapper)
 
 
 
@@ -55,7 +58,7 @@ async def get_protocol_version_from_context(
   if protocol_version_str is None:
     supported_versions_str = ", ".join(supported_versions)
     await context.send_initial_metadata([(MCP_PROTOCOL_VERSION_KEY, version.LATEST_PROTOCOL_VERSION)])
-    await context.abort(
+    context.abort(
         grpc.StatusCode.UNIMPLEMENTED,
         f"Protocol version not provided. Supported versions are: {supported_versions_str}",
     )
@@ -63,7 +66,7 @@ async def get_protocol_version_from_context(
   if protocol_version_str not in supported_versions:
     supported_versions_str = ", ".join(supported_versions)
     await context.send_initial_metadata([(MCP_PROTOCOL_VERSION_KEY, version.LATEST_PROTOCOL_VERSION)])
-    await context.abort(
+    context.abort(
         grpc.StatusCode.UNIMPLEMENTED,
         f"Unsupported protocol version: {protocol_version_str}. Supported versions are: {supported_versions_str}",
     )
