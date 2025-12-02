@@ -295,7 +295,7 @@ class FastMCP(Generic[LifespanResultT]):
             case "grpc":
                 """Attach the FastMCP server with a gRPC server."""
                 from mcp.server.grpc import (  # pylint: disable=g-import-not-at-top
-                    attach_mcp_server_to_grpc_server,  # type: ignore[attr-defined]
+                    attach_mcp_server_to_grpc_server,
                 )
 
                 attach_mcp_server_to_grpc_server(self, server)

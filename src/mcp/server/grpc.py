@@ -310,7 +310,7 @@ class McpServicer(mcp_pb2_grpc.McpServicer):
         await response_queue.put(None)
 
 
-def _enable_grpc_reflection(server: grpc.Server) -> None:
+def _enable_grpc_reflection(server: grpc.aio.Server) -> None:
     """Enables gRPC reflection on the given server."""
     logger.info("gRPC reflection enabled")
     service_names = (
@@ -322,7 +322,7 @@ def _enable_grpc_reflection(server: grpc.Server) -> None:
 
 def attach_mcp_server_to_grpc_server(
     mcp_server: "FastMCP",
-    server: grpc.Server,
+    server: grpc.aio.Server,
 ) -> None:
     """Attach a MCP server to a gRPC server."""
     # Create servicer and add to server
@@ -356,7 +356,7 @@ async def create_mcp_grpc_server(
         compression=mcp_server.settings.grpc_compression,
     )
 
-    attach_mcp_server_to_grpc_server(mcp_server, server)  # type: ignore
+    attach_mcp_server_to_grpc_server(mcp_server, server)
 
     # Configure server port
     if mcp_server.settings.grpc_credentials:
