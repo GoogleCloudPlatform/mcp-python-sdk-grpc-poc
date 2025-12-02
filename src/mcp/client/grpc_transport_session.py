@@ -406,9 +406,7 @@ class GRPCTransportSession(TransportSession):
                         structured_content = json_format.MessageToDict(response.structured_content)
                     is_error = is_error or response.is_error
 
-                final_result = convert.proto_result_to_content(  # type: ignore
-                    proto_results, structured_content, is_error
-                )
+                final_result = convert.proto_result_to_content(proto_results, structured_content, is_error)
                 # Clean up the running call and progress callback after the call is complete.
                 self._running_calls.pop(request_id, None)
                 self._progress_callbacks.pop(request_id, None)
