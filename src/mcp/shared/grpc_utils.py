@@ -67,7 +67,7 @@ async def get_protocol_version_from_context(
         await context.abort(
             grpc.StatusCode.UNIMPLEMENTED,
             f"Protocol version not provided. Supported versions are: {supported_versions_str}",
-        )  # type: ignore
+        )
 
     if protocol_version_str not in supported_versions:
         supported_versions_str = ", ".join(supported_versions)
@@ -75,7 +75,7 @@ async def get_protocol_version_from_context(
         await context.abort(
             grpc.StatusCode.UNIMPLEMENTED,
             f"Unsupported protocol version: {protocol_version_str}. Supported versions are: {supported_versions_str}",
-        )  # type: ignore
+        )
     return protocol_version_str
 
 
