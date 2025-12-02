@@ -40,7 +40,7 @@ def resource_type_to_proto(resource: types.Resource) -> mcp_pb2.Resource:
     """Converts a types.Resource object to a Resource protobuf message."""
     proto_annotations = None
     if resource.annotations:
-        audience: list[int] = []
+        audience: list[mcp_pb2.Role] = []
         if resource.annotations.audience:
             for role in resource.annotations.audience:
                 if role == "user":
@@ -48,7 +48,7 @@ def resource_type_to_proto(resource: types.Resource) -> mcp_pb2.Resource:
                 elif role == "assistant":
                     audience.append(mcp_pb2.ROLE_ASSISTANT)
         proto_annotations = mcp_pb2.Annotations(
-            audience=audience,  # type: ignore
+            audience=audience,
             priority=resource.annotations.priority if resource.annotations.priority is not None else 0.0,
         )
 
