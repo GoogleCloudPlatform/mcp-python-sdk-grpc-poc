@@ -70,11 +70,13 @@ class McpServicer(mcp_pb2_grpc.McpServicer):
         except json_format.ParseError as e:
             error_message = f"Failed to parse resource data: {e}"
             logger.error("Error during ListResources: %s", error_message, exc_info=True)
-            context.abort(grpc.StatusCode.INVALID_ARGUMENT, error_message)
+            await context.abort(grpc.StatusCode.INVALID_ARGUMENT, error_message)  # type: ignore
         except Exception as e:
             logger.error("Error during ListResources: %s", e, exc_info=True)
             # Send an INTERNAL error back to the client
-            context.abort(grpc.StatusCode.INTERNAL, f"An internal error occurred: {e}")
+            await context.abort(  # type: ignore
+                grpc.StatusCode.INTERNAL, f"An internal error occurred: {e}"
+            )
 
     @grpc_utils.check_protocol_version_from_metadata
     async def ListResourceTemplates(
