@@ -1,5 +1,6 @@
 import pytest
 
+from mcp.client.grpc_transport_session import GRPCTransportSession
 from mcp.client.session import ClientSession
 from mcp.shared.context import RequestContext
 from mcp.shared.memory import (
@@ -27,7 +28,7 @@ async def test_sampling_callback():
     )
 
     async def sampling_callback(
-        context: RequestContext[ClientSession, None],
+        context: RequestContext[ClientSession | GRPCTransportSession, None],
         params: CreateMessageRequestParams,
     ) -> CreateMessageResult:
         return callback_return

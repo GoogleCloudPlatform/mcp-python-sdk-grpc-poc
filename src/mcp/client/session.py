@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any, Union
 
 import anyio.lowlevel
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
@@ -15,6 +15,9 @@ from mcp.shared.message import SessionMessage
 from mcp.shared.session import BaseSession, ProgressFnT, RequestResponder
 from mcp.shared.version import SUPPORTED_PROTOCOL_VERSIONS
 
+if TYPE_CHECKING:
+    from mcp.client.grpc_transport_session import GRPCTransportSession
+
 DEFAULT_CLIENT_INFO = types.Implementation(name="mcp", version=types.LATEST_PROTOCOL_VERSION)
 
 logger = logging.getLogger("client")
@@ -27,7 +30,7 @@ async def _default_message_handler(
 
 
 async def _default_sampling_callback(
-    context: RequestContext["ClientSession", Any],
+    context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
     params: types.CreateMessageRequestParams,
 ) -> types.CreateMessageResult | types.ErrorData:
     return types.ErrorData(
@@ -37,7 +40,7 @@ async def _default_sampling_callback(
 
 
 async def _default_elicitation_callback(
-    context: RequestContext["ClientSession", Any],
+    context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
     params: types.ElicitRequestParams,
 ) -> types.ElicitResult | types.ErrorData:
     return types.ErrorData(
@@ -47,7 +50,7 @@ async def _default_elicitation_callback(
 
 
 async def _default_list_roots_callback(
-    context: RequestContext["ClientSession", Any],
+    context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
 ) -> types.ListRootsResult | types.ErrorData:
     return types.ErrorData(
         code=types.INVALID_REQUEST,
@@ -368,7 +371,7 @@ class ClientSession(
         )
 
     async def _received_request(self, responder: RequestResponder[types.ServerRequest, types.ClientResult]) -> None:
-        ctx = RequestContext[ClientSession, Any](
+        ctx = RequestContext[Union["ClientSession", "GRPCTransportSession"], Any](
             request_id=responder.request_id,
             meta=responder.request_meta,
             session=self,

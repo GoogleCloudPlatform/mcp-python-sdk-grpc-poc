@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, Union
 
 from jsonschema import SchemaError, ValidationError
 from jsonschema.validators import validate
@@ -8,13 +8,14 @@ from mcp.shared.context import RequestContext
 from mcp.shared.session import RequestResponder
 
 if TYPE_CHECKING:
+    from mcp.client.grpc_transport_session import GRPCTransportSession
     from mcp.client.session import ClientSession
 
 
 class SamplingFnT(Protocol):
     async def __call__(
         self,
-        context: RequestContext["ClientSession", Any],
+        context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
         params: types.CreateMessageRequestParams,
     ) -> types.CreateMessageResult | types.ErrorData: ...
 
@@ -22,14 +23,14 @@ class SamplingFnT(Protocol):
 class ElicitationFnT(Protocol):
     async def __call__(
         self,
-        context: RequestContext["ClientSession", Any],
+        context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
         params: types.ElicitRequestParams,
     ) -> types.ElicitResult | types.ErrorData: ...
 
 
 class ListRootsFnT(Protocol):
     async def __call__(
-        self, context: RequestContext["ClientSession", Any]
+        self, context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any]
     ) -> types.ListRootsResult | types.ErrorData: ...
 
 

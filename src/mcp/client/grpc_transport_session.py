@@ -95,7 +95,7 @@ class GRPCTransportSession(TransportSession):
                 response = await rpc_method(request, timeout=timeout, metadata=new_metadata)
                 logger.info("Successfully called %s (attempt %s)", rpc_method._method, attempt)
                 return response
-            except grpc.RpcError as e:
+            except grpc.aio.AioRpcError as e:
                 logger.warning("gRPC error on attempt %s: %s", attempt + 1, e)
                 if attempt == 1:
                     if self._check_and_update_version(e):
@@ -122,14 +122,14 @@ class GRPCTransportSession(TransportSession):
                 )
             )
 
-    def _check_and_update_version(self, e: grpc.RpcError) -> bool:
+    def _check_and_update_version(self, e: grpc.aio.AioRpcError) -> bool:
         """Checks for protocol version mismatch and updates the negotiated version if possible.
 
         Returns True if the version was updated and the call should be retried.
         """
         if e.code() == grpc.StatusCode.UNIMPLEMENTED:
-            initial_metadata = e.initial_metadata()  # type: ignore
-            negotiated_version = grpc_utils.get_metadata_value(initial_metadata, grpc_utils.MCP_PROTOCOL_VERSION_KEY)  # type: ignore
+            initial_metadata = e.initial_metadata()
+            negotiated_version = grpc_utils.get_metadata_value(initial_metadata, grpc_utils.MCP_PROTOCOL_VERSION_KEY)
 
             if negotiated_version is None:
                 logger.warning(
@@ -429,7 +429,7 @@ class GRPCTransportSession(TransportSession):
                 error_message = f"Failed to parse tool proto: {e}"
                 logger.error(error_message, exc_info=True)
                 raise McpError(ErrorData(code=types.PARSE_ERROR, message=error_message)) from e
-            except grpc.RpcError as e:
+            except grpc.aio.AioRpcError as e:
                 # Clean up the running call on gRPC error.
                 # Pop the call as a new one will be created in the next iteration.
                 self._running_calls.pop(request_id, None)

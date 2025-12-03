@@ -5,11 +5,14 @@ cd to the `examples/snippets/clients` directory and run:
 
 import asyncio
 import os
+from typing import Any
 
 from pydantic import AnyUrl
 
-from mcp import ClientSession, StdioServerParameters, types
-from mcp.client.stdio import stdio_client
+import mcp.types as types
+from mcp.client.grpc_transport_session import GRPCTransportSession
+from mcp.client.session import ClientSession
+from mcp.client.stdio import StdioServerParameters, stdio_client
 from mcp.shared.context import RequestContext
 
 # Create server parameters for stdio connection
@@ -22,7 +25,7 @@ server_params = StdioServerParameters(
 
 # Optional: create a sampling callback
 async def handle_sampling_message(
-    context: RequestContext[ClientSession, None], params: types.CreateMessageRequestParams
+    context: RequestContext[ClientSession | GRPCTransportSession, Any], params: types.CreateMessageRequestParams
 ) -> types.CreateMessageResult:
     print(f"Sampling request: {params.messages}")
     return types.CreateMessageResult(

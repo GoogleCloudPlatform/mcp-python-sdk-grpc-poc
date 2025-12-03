@@ -33,6 +33,7 @@ from examples.snippets.servers import (
     structured_output,
     tool_progress,
 )
+from mcp.client.grpc_transport_session import GRPCTransportSession
 from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
 from mcp.client.streamable_http import GetSessionIdCallback, streamablehttp_client
@@ -223,7 +224,7 @@ def unpack_streams(
 
 # Callback functions for testing
 async def sampling_callback(
-    context: RequestContext[ClientSession, None], params: CreateMessageRequestParams
+    context: RequestContext[ClientSession | GRPCTransportSession, None], params: CreateMessageRequestParams
 ) -> CreateMessageResult:
     """Sampling callback for tests."""
     return CreateMessageResult(
@@ -236,7 +237,9 @@ async def sampling_callback(
     )
 
 
-async def elicitation_callback(context: RequestContext[ClientSession, None], params: ElicitRequestParams):
+async def elicitation_callback(
+    context: RequestContext[ClientSession | GRPCTransportSession, None], params: ElicitRequestParams
+):
     """Elicitation callback for tests."""
     # For restaurant booking test
     if "No tables available" in params.message:
