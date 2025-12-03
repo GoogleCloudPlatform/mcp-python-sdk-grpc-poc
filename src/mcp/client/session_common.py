@@ -47,7 +47,7 @@ class MessageHandlerFnT(Protocol):
     ) -> None: ...
 
 
-async def validate_tool_result(output_schema: dict[str, Any], name: str, result: types.CallToolResult) -> None:
+async def validate_tool_result(output_schema: dict[str, Any] | None, name: str, result: types.CallToolResult) -> None:
     """Validates tool result structured content against its output schema."""
     if output_schema and len(output_schema) > 0:
         if result.structuredContent is None and not result.content:
