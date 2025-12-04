@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class GrpcSession(TransportSession):
     """A session object for gRPC tool calls that uses a queue."""
 
-    def __init__(self, response_queue: "asyncio.Queue[mcp_pb2.CallToolResponse | None]"):
+    def __init__(self, response_queue: asyncio.Queue[mcp_pb2.CallToolResponse | None]):
         self._response_queue = response_queue
 
     async def send_log_message(
