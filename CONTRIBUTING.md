@@ -37,32 +37,32 @@ uv tool install pre-commit --with pre-commit-uv --force-reinstall
 uv run pytest
 ```
 
-1. Run type checking:
+5. Run type checking:
 
 ```bash
 uv run pyright
 ```
 
-1. Run linting:
+6. Run linting:
 
 ```bash
 uv run ruff check .
 uv run ruff format .
 ```
 
-1. Update README snippets if you modified example code:
+7. Update README snippets if you modified example code:
 
 ```bash
 uv run scripts/update_readme_snippets.py
 ```
 
-1. (Optional) Run pre-commit hooks on all files:
+8. (Optional) Run pre-commit hooks on all files:
 
 ```bash
 pre-commit run --all-files
 ```
 
-1. Submit a pull request to the same branch you branched from
+9. Submit a pull request to the same branch you branched from
 
 ## Code Style
 
