@@ -288,7 +288,7 @@ def _populate_content_from_content_block(
         if isinstance(resource_contents, types.TextResourceContents):
             result.embedded_resource.contents.text = resource_contents.text
             return True
-        else:  # isinstance(resource_contents, types.BlobResourceContents)
+        elif isinstance(resource_contents, types.BlobResourceContents):  # type: ignore
             result.embedded_resource.contents.blob = base64.b64decode(resource_contents.blob)
             return True
     elif isinstance(content_block, types.ResourceLink):  # type: ignore
