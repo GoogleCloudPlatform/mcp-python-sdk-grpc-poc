@@ -452,7 +452,7 @@ async def generate_call_tool_requests(
             if args_struct:
                 request.request.arguments.CopyFrom(args_struct)
 
-        else:  # isinstance(request_params, types.ProgressNotification)
+        elif isinstance(request_params, types.ProgressNotification):  # type: ignore
             progress_token = request_params.params.progressToken
             progress = request_params.params.progress
             total = request_params.params.total
