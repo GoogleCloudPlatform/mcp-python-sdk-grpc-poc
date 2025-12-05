@@ -8,7 +8,9 @@ from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import grpc
 import pytest
-from google.protobuf import json_format, struct_pb2
+
+from google.protobuf import json_format  # isort: skip
+from google.protobuf import struct_pb2  # isort: skip
 from pydantic import AnyUrl, BaseModel
 
 from mcp import types
