@@ -9,8 +9,8 @@ from typing import Any, TypeAlias, cast
 
 import jsonschema
 
-from google.protobuf import duration_pb2, json_format # isort: skip
-from google.protobuf import struct_pb2 # isort: skip
+from google.protobuf import duration_pb2, json_format  # isort: skip
+from google.protobuf import struct_pb2  # isort: skip
 from pydantic import AnyUrl
 
 from mcp import types
