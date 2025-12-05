@@ -6,7 +6,9 @@ from datetime import timedelta
 from typing import Any, cast
 
 import pytest
-from google.protobuf import duration_pb2, json_format
+
+from google.protobuf import duration_pb2  # isort: skip
+from google.protobuf import json_format  # isort: skip
 from google.protobuf.struct_pb2 import Struct
 from pydantic import AnyUrl
 
