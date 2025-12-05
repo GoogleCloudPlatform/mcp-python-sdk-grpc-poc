@@ -7,8 +7,7 @@ from typing import Any
 import anyio
 import pytest
 
-from mcp.client.session import TransportSession
-from mcp.client.session import ClientSession
+from mcp.client.session import ClientSession, TransportSession
 from mcp.server import Server
 from mcp.server.lowlevel import NotificationOptions
 from mcp.server.models import InitializationOptions
