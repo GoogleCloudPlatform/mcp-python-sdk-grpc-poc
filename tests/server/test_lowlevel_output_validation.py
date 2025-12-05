@@ -7,6 +7,7 @@ from typing import Any
 import anyio
 import pytest
 
+from mcp.client.session import TransportSession
 from mcp.client.session import ClientSession
 from mcp.server import Server
 from mcp.server.lowlevel import NotificationOptions
@@ -20,7 +21,7 @@ from mcp.types import CallToolResult, ClientResult, ServerNotification, ServerRe
 async def run_tool_test(
     tools: list[Tool],
     call_tool_handler: Callable[[str, dict[str, Any]], Awaitable[Any]],
-    test_callback: Callable[[ClientSession], Awaitable[CallToolResult]],
+    test_callback: Callable[[TransportSession], Awaitable[CallToolResult]],
 ) -> CallToolResult | None:
     """Helper to run a tool test with minimal boilerplate.
 
@@ -122,7 +123,7 @@ async def test_content_only_without_output_schema():
         else:
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: ClientSession) -> CallToolResult:
+    async def test_callback(client_session: TransportSession) -> CallToolResult:
         return await client_session.call_tool("echo", {"message": "Hello"})
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
@@ -158,7 +159,7 @@ async def test_dict_only_without_output_schema():
         else:
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: ClientSession) -> CallToolResult:
+    async def test_callback(client_session: TransportSession) -> CallToolResult:
         return await client_session.call_tool("get_info", {})
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
@@ -197,7 +198,7 @@ async def test_both_content_and_dict_without_output_schema():
         else:
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: ClientSession) -> CallToolResult:
+    async def test_callback(client_session: TransportSession) -> CallToolResult:
         return await client_session.call_tool("process", {})
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
@@ -237,7 +238,7 @@ async def test_content_only_with_output_schema_error():
         # This returns only content, but outputSchema expects structured data
         return [TextContent(type="text", text="This is not structured")]
 
-    async def test_callback(client_session: ClientSession) -> CallToolResult:
+    async def test_callback(client_session: TransportSession) -> CallToolResult:
         return await client_session.call_tool("structured_tool", {})
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
@@ -285,7 +286,7 @@ async def test_valid_dict_with_output_schema():
         else:
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: ClientSession) -> CallToolResult:
+    async def test_callback(client_session: TransportSession) -> CallToolResult:
         return await client_session.call_tool("calc", {"x": 3, "y": 4})
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
@@ -329,7 +330,7 @@ async def test_invalid_dict_with_output_schema():
         else:
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: ClientSession) -> CallToolResult:
+    async def test_callback(client_session: TransportSession) -> CallToolResult:
         return await client_session.call_tool("user_info", {})
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
@@ -377,7 +378,7 @@ async def test_both_content_and_valid_dict_with_output_schema():
         else:
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: ClientSession) -> CallToolResult:
+    async def test_callback(client_session: TransportSession) -> CallToolResult:
         return await client_session.call_tool("analyze", {"text": "Great job!"})
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
@@ -421,7 +422,7 @@ async def test_output_schema_type_validation():
         else:
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: ClientSession) -> CallToolResult:
+    async def test_callback(client_session: TransportSession) -> CallToolResult:
         return await client_session.call_tool("stats", {})
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
