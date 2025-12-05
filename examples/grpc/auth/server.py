@@ -2,8 +2,8 @@
 
 import grpc
 from absl import app, flags, logging
-
 from mcp.examples.grpc.auth import _credentials
+
 from mcp.server import fastmcp
 
 _PORT = flags.DEFINE_integer("port", 50051, "Server port")
