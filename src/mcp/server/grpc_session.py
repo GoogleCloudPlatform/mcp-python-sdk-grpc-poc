@@ -12,13 +12,20 @@ from mcp.server.transport_session import TransportSession
 
 logger = logging.getLogger(__name__)
 
+
 class GrpcSession(TransportSession):
     """A session object for gRPC tool calls that uses a queue."""
 
-    def __init__(self, response_queue: asyncio.Queue):
+    def __init__(self, response_queue: asyncio.Queue[mcp_pb2.CallToolResponse | None]):
         self._response_queue = response_queue
 
-    async def send_log_message(self, level, data, **kwargs):
+    async def send_log_message(
+        self,
+        level: types.LoggingLevel,
+        data: Any,
+        logger: str | None = None,
+        related_request_id: types.RequestId | None = None,
+    ) -> None:
         """Logs tool messages to the server console."""
         raise NotImplementedError
 
@@ -44,9 +51,13 @@ class GrpcSession(TransportSession):
         raise NotImplementedError
 
     async def send_progress_notification(
-        self, progress_token, progress, total, message,
+        self,
+        progress_token: str | int,
+        progress: float,
+        total: float | None = None,
+        message: str | None = None,
         related_request_id: types.RequestId | None = None,
-    ):
+    ) -> None:
         """Puts a progress notification onto the response queue."""
         progress_proto = mcp_pb2.ProgressNotification(
             progress_token=str(progress_token),
@@ -57,9 +68,7 @@ class GrpcSession(TransportSession):
         if message is not None:
             progress_proto.message = message
 
-        response = mcp_pb2.CallToolResponse(
-            common=mcp_pb2.ResponseFields(progress=progress_proto)
-        )
+        response = mcp_pb2.CallToolResponse(common=mcp_pb2.ResponseFields(progress=progress_proto))
         await self._response_queue.put(response)
 
     async def send_resource_list_changed(self) -> None:

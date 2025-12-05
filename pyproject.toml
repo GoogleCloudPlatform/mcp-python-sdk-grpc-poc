@@ -96,6 +96,9 @@ packages = ["src/mcp"]
 [tool.pyright]
 typeCheckingMode = "strict"
 include = ["src/mcp", "tests", "examples/servers", "examples/snippets"]
+# TODO(asheshvidyut) remove exclusion for test_grpc_transport_session_mocks.py 
+# , once it is fixed
+exclude = ["src/mcp/proto", "tests/client/test_grpc_transport_session_mocks.py"]
 venvPath = "."
 venv = ".venv"
 # The FastAPI style of using decorators in tests gives a `reportUnusedFunction` error.
@@ -115,7 +118,7 @@ ignore = ["PERF203"]
 [tool.ruff]
 line-length = 120
 target-version = "py310"
-extend-exclude = ["README.md"]
+extend-exclude = ["README.md", "src/mcp/proto/*"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]

@@ -7,7 +7,7 @@ from typing import Any
 import anyio
 import pytest
 
-from mcp.client.session import TransportSession, ClientSession
+from mcp.client.session import ClientSession, TransportSession
 from mcp.server import Server
 from mcp.server.lowlevel import NotificationOptions
 from mcp.server.models import InitializationOptions
@@ -125,7 +125,7 @@ async def test_valid_tool_call():
         else:
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: ClientSession) -> CallToolResult:
+    async def test_callback(client_session: TransportSession) -> CallToolResult:
         return await client_session.call_tool("add", {"a": 5, "b": 3})
 
     result = await run_tool_test([create_add_tool()], call_tool_handler, test_callback)
@@ -147,7 +147,7 @@ async def test_invalid_tool_call_missing_required():
         # This should not be reached due to validation
         raise RuntimeError("Should not reach here")
 
-    async def test_callback(client_session: ClientSession) -> CallToolResult:
+    async def test_callback(client_session: TransportSession) -> CallToolResult:
         return await client_session.call_tool("add", {"a": 5})  # missing 'b'
 
     result = await run_tool_test([create_add_tool()], call_tool_handler, test_callback)
@@ -170,7 +170,7 @@ async def test_invalid_tool_call_wrong_type():
         # This should not be reached due to validation
         raise RuntimeError("Should not reach here")
 
-    async def test_callback(client_session: ClientSession) -> CallToolResult:
+    async def test_callback(client_session: TransportSession) -> CallToolResult:
         return await client_session.call_tool("add", {"a": "five", "b": 3})  # 'a' should be number
 
     result = await run_tool_test([create_add_tool()], call_tool_handler, test_callback)
@@ -210,7 +210,7 @@ async def test_cache_refresh_on_missing_tool():
         else:
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: ClientSession) -> CallToolResult:
+    async def test_callback(client_session: TransportSession) -> CallToolResult:
         # Call tool without first listing tools (cache should be empty)
         # The cache should be refreshed automatically
         return await client_session.call_tool("multiply", {"x": 10, "y": 20})
@@ -248,7 +248,7 @@ async def test_enum_constraint_validation():
         # This should not be reached due to validation failure
         raise RuntimeError("Should not reach here")
 
-    async def test_callback(client_session: ClientSession) -> CallToolResult:
+    async def test_callback(client_session: TransportSession) -> CallToolResult:
         return await client_session.call_tool("greet", {"name": "Smith", "title": "Prof"})  # Invalid title
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
@@ -289,7 +289,7 @@ async def test_tool_not_in_list_logs_warning(caplog: pytest.LogCaptureFixture):
         else:
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: ClientSession) -> CallToolResult:
+    async def test_callback(client_session: TransportSession) -> CallToolResult:
         # Call a tool that's not in the list with invalid arguments
         # This should trigger the warning about validation not being performed
         return await client_session.call_tool("unknown_tool", {"invalid": "args"})

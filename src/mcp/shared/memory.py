@@ -13,7 +13,6 @@ from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStre
 import mcp.types as types
 from mcp.client.session import (
     ClientSession,
-    TransportSession,
     ElicitationFnT,
     ListRootsFnT,
     LoggingFnT,
@@ -62,7 +61,7 @@ async def create_connected_server_and_client_session(
     client_info: types.Implementation | None = None,
     raise_exceptions: bool = False,
     elicitation_callback: ElicitationFnT | None = None,
-) -> AsyncGenerator[TransportSession, None]:
+) -> AsyncGenerator[ClientSession, None]:
     """Creates a ClientSession that is connected to a running MCP server."""
     async with create_client_server_memory_streams() as (
         client_streams,

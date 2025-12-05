@@ -1,16 +1,15 @@
 import asyncio
-import logging
-import unittest.mock
 
 import pytest
 
 from mcp.proto import mcp_pb2
 from mcp.server import grpc_session
 
+
 @pytest.mark.anyio
 async def test_send_progress_notification_all_fields():
     """Test send_progress_notification with all fields."""
-    queue = asyncio.Queue()
+    queue: asyncio.Queue[mcp_pb2.CallToolResponse | None] = asyncio.Queue()
     session = grpc_session.GrpcSession(queue)
 
     await session.send_progress_notification("token1", 50, 100, "In progress")
@@ -27,7 +26,7 @@ async def test_send_progress_notification_all_fields():
 @pytest.mark.anyio
 async def test_send_progress_notification_minimal_fields():
     """Test send_progress_notification with minimal fields."""
-    queue = asyncio.Queue()
+    queue: asyncio.Queue[mcp_pb2.CallToolResponse | None] = asyncio.Queue()
     session = grpc_session.GrpcSession(queue)
 
     await session.send_progress_notification("token2", 75, None, None)
