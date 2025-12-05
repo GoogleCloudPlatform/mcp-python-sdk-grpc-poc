@@ -4,10 +4,10 @@ import asyncio
 
 import grpc
 from absl import app, flags
-from mcp.examples.grpc.auth import _credentials
 
 import mcp
 from mcp.client import grpc_transport_session
+from mcp.examples.grpc.auth import _credentials
 
 _SERVER_HOST = flags.DEFINE_string("server_host", "localhost", "Server host")
 _SERVER_PORT = flags.DEFINE_integer("server_port", 50051, "Server port")
