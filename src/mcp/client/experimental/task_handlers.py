@@ -249,7 +249,7 @@ class ExperimentalTaskHandlers:
 
     async def handle_request(
         self,
-        ctx: RequestContext["ClientSession" | "GRPCTransportSession", Any],
+        ctx: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
         responder: RequestResponder[types.ServerRequest, types.ClientResult],
     ) -> None:
         """Handle a task-related request from the server.

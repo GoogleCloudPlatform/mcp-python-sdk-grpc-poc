@@ -124,7 +124,7 @@ def create_sampling_task_handlers(
     task_complete_events: dict[str, Event] = {}
 
     async def handle_augmented_sampling(
-        context: RequestContext[ClientSession, Any],
+        context: RequestContext[ClientSession | GRPCTransportSession, Any],
         params: CreateMessageRequestParams,
         task_metadata: TaskMetadata,
     ) -> CreateTaskResult:
@@ -143,7 +143,7 @@ def create_sampling_task_handlers(
         return CreateTaskResult(task=task)
 
     async def handle_get_task(
-        context: RequestContext[ClientSession, Any],
+        context: RequestContext[ClientSession | GRPCTransportSession, Any],
         params: Any,
     ) -> GetTaskResult:
         """Handle tasks/get from server."""
@@ -160,7 +160,7 @@ def create_sampling_task_handlers(
         )
 
     async def handle_get_task_result(
-        context: RequestContext[ClientSession, Any],
+        context: RequestContext[ClientSession | GRPCTransportSession, Any],
         params: Any,
     ) -> GetTaskPayloadResult | ErrorData:
         """Handle tasks/result from server."""
@@ -215,7 +215,7 @@ async def test_scenario1_normal_tool_normal_elicitation() -> None:
 
     # Elicitation callback for client
     async def elicitation_callback(
-        context: RequestContext[ClientSession, Any],
+        context: RequestContext[ClientSession | GRPCTransportSession, Any],
         params: ElicitRequestParams,
     ) -> ElicitResult:
         elicit_received.set()
@@ -385,7 +385,7 @@ async def test_scenario3_task_augmented_tool_normal_elicitation() -> None:
 
     # Elicitation callback for client
     async def elicitation_callback(
-        context: RequestContext[ClientSession, Any],
+        context: RequestContext[ClientSession | GRPCTransportSession, Any],
         params: ElicitRequestParams,
     ) -> ElicitResult:
         elicit_received.set()
