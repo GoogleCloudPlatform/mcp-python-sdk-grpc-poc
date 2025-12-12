@@ -12,6 +12,8 @@ from collections.abc import (
     Iterable,
     Sequence,
 )
+from collections.abc import AsyncIterator, Awaitable, Callable, Collection, Iterable, Sequence
+from concurrent.futures import Executor
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from typing import Any, Generic, Literal
 
