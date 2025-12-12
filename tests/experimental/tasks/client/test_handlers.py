@@ -55,6 +55,8 @@ from mcp.types import (
     TextContent,
 )
 
+from src.mcp.client.grpc_transport_session import GRPCTransportSession
+
 # Buffer size for test streams
 STREAM_BUFFER_SIZE = 10
 
@@ -180,7 +182,7 @@ async def test_client_handles_get_task_result_request(client_streams: ClientTest
         store = InMemoryTaskStore()
 
         async def get_task_result_handler(
-            context: RequestContext[ClientSession, None],
+            context: RequestContext[ClientSession | GRPCTransportSession, None],
             params: GetTaskPayloadRequestParams,
         ) -> GetTaskPayloadResult | ErrorData:
             result = await store.get_result(params.taskId)
@@ -243,7 +245,7 @@ async def test_client_handles_list_tasks_request(client_streams: ClientTestStrea
         store = InMemoryTaskStore()
 
         async def list_tasks_handler(
-            context: RequestContext[ClientSession, None],
+            context: RequestContext[ClientSession | GRPCTransportSession, None],
             params: types.PaginatedRequestParams | None,
         ) -> ListTasksResult | ErrorData:
             cursor = params.cursor if params else None
@@ -298,7 +300,7 @@ async def test_client_handles_cancel_task_request(client_streams: ClientTestStre
         store = InMemoryTaskStore()
 
         async def cancel_task_handler(
-            context: RequestContext[ClientSession, None],
+            context: RequestContext[ClientSession | GRPCTransportSession, None],
             params: CancelTaskRequestParams,
         ) -> CancelTaskResult | ErrorData:
             task = await store.get_task(params.taskId)
@@ -365,7 +367,7 @@ async def test_client_task_augmented_sampling(client_streams: ClientTestStreams)
         background_tg: list[TaskGroup | None] = [None]
 
         async def task_augmented_sampling_callback(
-            context: RequestContext[ClientSession, None],
+            context: RequestContext[ClientSession | GRPCTransportSession, None],
             params: CreateMessageRequestParams,
             task_metadata: TaskMetadata,
         ) -> CreateTaskResult:
@@ -388,7 +390,7 @@ async def test_client_task_augmented_sampling(client_streams: ClientTestStreams)
             return CreateTaskResult(task=task)
 
         async def get_task_handler(
-            context: RequestContext[ClientSession, None],
+            context: RequestContext[ClientSession | GRPCTransportSession, None],
             params: GetTaskRequestParams,
         ) -> GetTaskResult | ErrorData:
             task = await store.get_task(params.taskId)
@@ -404,7 +406,7 @@ async def test_client_task_augmented_sampling(client_streams: ClientTestStreams)
             )
 
         async def get_task_result_handler(
-            context: RequestContext[ClientSession, None],
+            context: RequestContext[ClientSession | GRPCTransportSession, None],
             params: GetTaskPayloadRequestParams,
         ) -> GetTaskPayloadResult | ErrorData:
             result = await store.get_result(params.taskId)
@@ -509,7 +511,7 @@ async def test_client_task_augmented_elicitation(client_streams: ClientTestStrea
         background_tg: list[TaskGroup | None] = [None]
 
         async def task_augmented_elicitation_callback(
-            context: RequestContext[ClientSession, None],
+            context: RequestContext[ClientSession | GRPCTransportSession, None],
             params: ElicitRequestParams,
             task_metadata: TaskMetadata,
         ) -> CreateTaskResult | ErrorData:
@@ -528,7 +530,7 @@ async def test_client_task_augmented_elicitation(client_streams: ClientTestStrea
             return CreateTaskResult(task=task)
 
         async def get_task_handler(
-            context: RequestContext[ClientSession, None],
+            context: RequestContext[ClientSession | GRPCTransportSession, None],
             params: GetTaskRequestParams,
         ) -> GetTaskResult | ErrorData:
             task = await store.get_task(params.taskId)
@@ -544,7 +546,7 @@ async def test_client_task_augmented_elicitation(client_streams: ClientTestStrea
             )
 
         async def get_task_result_handler(
-            context: RequestContext[ClientSession, None],
+            context: RequestContext[ClientSession | GRPCTransportSession, None],
             params: GetTaskPayloadRequestParams,
         ) -> GetTaskPayloadResult | ErrorData:
             result = await store.get_result(params.taskId)

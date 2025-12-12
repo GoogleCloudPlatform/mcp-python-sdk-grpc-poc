@@ -14,6 +14,8 @@ from mcp.types import (
     ToolUseContent,
 )
 
+from src.mcp.client.grpc_transport_session import GRPCTransportSession
+
 
 @pytest.mark.anyio
 async def test_sampling_callback():
@@ -29,7 +31,7 @@ async def test_sampling_callback():
     )
 
     async def sampling_callback(
-        context: RequestContext[ClientSession, None],
+        context: RequestContext[ClientSession | GRPCTransportSession, None],
         params: CreateMessageRequestParams,
     ) -> CreateMessageResult:
         return callback_return
