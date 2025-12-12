@@ -54,7 +54,6 @@ from mcp.types import (
     TaskMetadata,
     TextContent,
 )
-
 from src.mcp.client.grpc_transport_session import GRPCTransportSession
 
 # Buffer size for test streams

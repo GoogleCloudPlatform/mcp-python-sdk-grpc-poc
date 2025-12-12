@@ -59,7 +59,6 @@ from mcp.types import (
     TextResourceContents,
     ToolListChangedNotification,
 )
-
 from src.mcp.client.grpc_transport_session import GRPCTransportSession
 from tests.test_helpers import wait_for_server
 
@@ -227,7 +226,9 @@ async def sampling_callback(
     )
 
 
-async def elicitation_callback(context: RequestContext[ClientSession | GRPCTransportSession, None], params: ElicitRequestParams):
+async def elicitation_callback(
+    context: RequestContext[ClientSession | GRPCTransportSession, None], params: ElicitRequestParams
+):
     """Elicitation callback for tests."""
     # For restaurant booking test
     if "No tables available" in params.message:

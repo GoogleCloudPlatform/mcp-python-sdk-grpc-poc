@@ -13,7 +13,6 @@ from mcp.types import (
     TextContent,
     ToolUseContent,
 )
-
 from src.mcp.client.grpc_transport_session import GRPCTransportSession
 
 

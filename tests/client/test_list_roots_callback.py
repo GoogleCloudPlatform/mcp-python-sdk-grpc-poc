@@ -1,9 +1,8 @@
+
 import pytest
 from pydantic import FileUrl
 
-from typing import Union
-from mcp.client.session import ClientSession
-from mcp.client.session import GRPCTransportSession
+from mcp.client.session import ClientSession, GRPCTransportSession
 from mcp.server.fastmcp.server import Context
 from mcp.server.session import ServerSession
 from mcp.shared.context import RequestContext
@@ -33,7 +32,7 @@ async def test_list_roots_callback():
     )
 
     async def list_roots_callback(
-        context: RequestContext[Union[ClientSession, GRPCTransportSession], None],
+        context: RequestContext[ClientSession | GRPCTransportSession, None],
     ) -> ListRootsResult:
         return callback_return
 

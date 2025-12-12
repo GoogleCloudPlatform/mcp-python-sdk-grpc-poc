@@ -22,6 +22,7 @@ SessionT = TypeVar(
     "SessionT", bound=BaseSession[Any, Any, Any, Any, Any] | "ClientTransportSession" | "ServerTransportSession"
 )
 
+
 @dataclass
 class RequestContext(Generic[SessionT, LifespanContextT, RequestT]):
     request_id: RequestId

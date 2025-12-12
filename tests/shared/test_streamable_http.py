@@ -52,7 +52,6 @@ from mcp.types import (
     TextResourceContents,
     Tool,
 )
-
 from src.mcp.client.grpc_transport_session import GRPCTransportSession
 from tests.test_helpers import wait_for_server
 

@@ -22,8 +22,8 @@ from mcp.shared.context import RequestContext
 from mcp.shared.session import RequestResponder
 
 if TYPE_CHECKING:
-    from mcp.client.session import ClientSession
-    from mcp.client.session import GRPCTransportSession
+    from mcp.client.session import ClientSession, GRPCTransportSession
+
 
 class GetTaskHandlerFnT(Protocol):
     """Handler for tasks/get requests from server.

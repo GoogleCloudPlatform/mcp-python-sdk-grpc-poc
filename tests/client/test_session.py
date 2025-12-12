@@ -26,7 +26,6 @@ from mcp.types import (
     ServerResult,
     TextContent,
 )
-from src.mcp.client.session import ClientSession
 from src.mcp.client.grpc_transport_session import GRPCTransportSession
 
 

@@ -8,13 +8,11 @@ import os
 
 from pydantic import AnyUrl
 
-from mcp.client.session import ClientSession
-from mcp.client.grpc_transport_session import GRPCTransportSession
 from mcp import StdioServerParameters, types
+from mcp.client.grpc_transport_session import GRPCTransportSession
+from mcp.client.session import ClientSession
 from mcp.client.stdio import stdio_client
 from mcp.shared.context import RequestContext
-
-from typing import Union
 
 # Create server parameters for stdio connection
 server_params = StdioServerParameters(
@@ -26,7 +24,7 @@ server_params = StdioServerParameters(
 
 # Optional: create a sampling callback
 async def handle_sampling_message(
-    context: RequestContext[Union[ClientSession, GRPCTransportSession], None], params: types.CreateMessageRequestParams
+    context: RequestContext[ClientSession | GRPCTransportSession, None], params: types.CreateMessageRequestParams
 ) -> types.CreateMessageResult:
     print(f"Sampling request: {params.messages}")
     return types.CreateMessageResult(

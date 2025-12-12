@@ -42,7 +42,6 @@ from mcp.types import (
     Tool,
     ToolExecution,
 )
-
 from src.mcp.client.grpc_transport_session import GRPCTransportSession
 
 
