@@ -27,7 +27,7 @@ import json
 import subprocess
 import sys
 import webbrowser
-from typing import Any
+from typing import Any, Union
 from urllib.parse import urlparse
 
 from mcp import ClientSession, types
@@ -39,7 +39,7 @@ from mcp.types import URL_ELICITATION_REQUIRED
 
 
 async def handle_elicitation(
-    context: RequestContext[ClientSession | GRPCTransportSession, Any],
+    context: RequestContext[Union[ClientSession, GRPCTransportSession], Any],
     params: types.ElicitRequestParams,
 ) -> types.ElicitResult | types.ErrorData:
     """Handle elicitation requests from the server.

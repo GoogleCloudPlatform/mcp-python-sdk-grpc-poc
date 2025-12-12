@@ -192,6 +192,7 @@ class GRPCTransportSession(TransportSession):
                 "Received cancellation notification for request_id: %s",
                 request_id,
             )
+            request_id = cast(str | int, request_id)
             self._cancel_request(request_id)
         else:
             logger.warning(

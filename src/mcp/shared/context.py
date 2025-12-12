@@ -3,7 +3,7 @@ Request context for MCP handlers.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Generic
+from typing import TYPE_CHECKING, Any, Generic
 
 from typing_extensions import TypeVar
 

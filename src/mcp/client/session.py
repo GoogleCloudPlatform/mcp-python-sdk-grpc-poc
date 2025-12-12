@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta
-from typing import TYPE_CHECKING, Any, Union, overload
+from typing import TYPE_CHECKING, Any, Union, overload, cast
 
 import anyio.lowlevel
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
@@ -495,7 +495,7 @@ class ClientSession(
         await self.send_notification(types.ClientNotification(types.RootsListChangedNotification()))
 
     async def _received_request(self, responder: RequestResponder[types.ServerRequest, types.ClientResult]) -> None:
-        ctx = RequestContext[ClientSession, Any](
+        ctx = RequestContext[Union["ClientSession", "GRPCTransportSession"], Any](
             request_id=responder.request_id,
             meta=responder.request_meta,
             session=self,
