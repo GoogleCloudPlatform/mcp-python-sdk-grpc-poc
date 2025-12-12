@@ -66,8 +66,8 @@ async def test_request_cancellation():
                 request_id = server.request_context.request_id
                 ev_tool_called.set()
                 await anyio.sleep(10)  # Long enough to ensure we can cancel
-                return []
-            raise ValueError(f"Unknown tool: {name}")
+                return []  # pragma: no cover
+            raise ValueError(f"Unknown tool: {name}")  # pragma: no cover
 
         # Register the tool so it shows up in list_tools
         @server.list_tools()
@@ -88,13 +88,12 @@ async def test_request_cancellation():
             await client_session.send_request(
                 ClientRequest(
                     types.CallToolRequest(
-                        method="tools/call",
                         params=types.CallToolRequestParams(name="slow_tool", arguments={}),
                     )
                 ),
                 types.CallToolResult,
             )
-            pytest.fail("Request should have been cancelled")
+            pytest.fail("Request should have been cancelled")  # pragma: no cover
         except McpError as e:
             # Expected - request was cancelled
             assert "Request cancelled" in str(e)
@@ -113,7 +112,6 @@ async def test_request_cancellation():
             await client_session.send_notification(
                 ClientNotification(
                     CancelledNotification(
-                        method="notifications/cancelled",
                         params=CancelledNotificationParams(requestId=request_id),
                     )
                 )
@@ -143,7 +141,7 @@ async def test_connection_closed():
             try:
                 # any request will do
                 await client_session.initialize()
-                pytest.fail("Request should have errored")
+                pytest.fail("Request should have errored")  # pragma: no cover
             except McpError as e:
                 # Expected - request errored
                 assert "Connection closed" in str(e)

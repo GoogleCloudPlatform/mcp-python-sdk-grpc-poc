@@ -117,7 +117,6 @@ class OAuthAuthorizationServerProvider(Protocol, Generic[AuthorizationCodeT, Ref
         Returns:
             The client information, or None if the client does not exist.
         """
-        ...
 
     async def register_client(self, client_info: OAuthClientInformationFull) -> None:
         """
@@ -132,7 +131,6 @@ class OAuthAuthorizationServerProvider(Protocol, Generic[AuthorizationCodeT, Ref
         Raises:
             RegistrationError: If the client metadata is invalid.
         """
-        ...
 
     async def authorize(self, client: OAuthClientInformationFull, params: AuthorizationParams) -> str:
         """
@@ -221,8 +219,7 @@ class OAuthAuthorizationServerProvider(Protocol, Generic[AuthorizationCodeT, Ref
         Returns:
             The RefreshToken object if found, or None if not found.
         """
-
-    ...
+        ...
 
     async def exchange_refresh_token(
         self,
@@ -258,7 +255,6 @@ class OAuthAuthorizationServerProvider(Protocol, Generic[AuthorizationCodeT, Ref
         Returns:
             The AuthInfo, or None if the token is invalid.
         """
-        ...
 
     async def revoke_token(
         self,
@@ -276,12 +272,11 @@ class OAuthAuthorizationServerProvider(Protocol, Generic[AuthorizationCodeT, Ref
         Args:
             token: the token to revoke
         """
-        ...
 
 
 def construct_redirect_uri(redirect_uri_base: str, **params: str | None) -> str:
     parsed_uri = urlparse(redirect_uri_base)
-    query_params = [(k, v) for k, vs in parse_qs(parsed_uri.query) for v in vs]
+    query_params = [(k, v) for k, vs in parse_qs(parsed_uri.query).items() for v in vs]
     for k, v in params.items():
         if v is not None:
             query_params.append((k, v))
