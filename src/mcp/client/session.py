@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta
-from typing import Any, Protocol, overload, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Union, overload
 
 import anyio.lowlevel
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
@@ -9,10 +9,10 @@ from typing_extensions import deprecated
 
 import mcp.types as types
 from mcp.client import session_common
-from mcp.client.session_common import ElicitationFnT, ListRootsFnT, LoggingFnT, MessageHandlerFnT, SamplingFnT
-from mcp.client.transport_session import TransportSession
 from mcp.client.experimental import ExperimentalClientFeatures
 from mcp.client.experimental.task_handlers import ExperimentalTaskHandlers
+from mcp.client.session_common import ElicitationFnT, ListRootsFnT, LoggingFnT, MessageHandlerFnT, SamplingFnT
+from mcp.client.transport_session import TransportSession
 from mcp.shared.context import RequestContext
 from mcp.shared.message import SessionMessage
 from mcp.shared.session import BaseSession, ProgressFnT, RequestResponder
@@ -78,7 +78,7 @@ class ClientSession(
         types.ClientResult,
         types.ServerRequest,
         types.ServerNotification,
-    ]
+    ],
 ):
     def __init__(
         self,
