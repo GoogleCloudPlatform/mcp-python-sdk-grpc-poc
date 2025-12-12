@@ -78,7 +78,7 @@ async def test_create_message_backwards_compat_single_content():
     )
 
     async def sampling_callback(
-        context: RequestContext[ClientSession, None],
+        context: RequestContext[ClientSession | GRPCTransportSession, None],
         params: CreateMessageRequestParams,
     ) -> CreateMessageResult:
         return callback_return

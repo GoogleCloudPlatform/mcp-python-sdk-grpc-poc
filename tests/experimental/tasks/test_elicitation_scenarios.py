@@ -43,6 +43,8 @@ from mcp.types import (
     ToolExecution,
 )
 
+from src.mcp.client.grpc_transport_session import GRPCTransportSession
+
 
 def create_client_task_handlers(
     client_task_store: InMemoryTaskStore,
@@ -54,7 +56,7 @@ def create_client_task_handlers(
     task_complete_events: dict[str, Event] = {}
 
     async def handle_augmented_elicitation(
-        context: RequestContext[ClientSession, Any],
+        context: RequestContext[ClientSession | GRPCTransportSession, Any],
         params: ElicitRequestParams,
         task_metadata: TaskMetadata,
     ) -> CreateTaskResult:
@@ -73,7 +75,7 @@ def create_client_task_handlers(
         return CreateTaskResult(task=task)
 
     async def handle_get_task(
-        context: RequestContext[ClientSession, Any],
+        context: RequestContext[ClientSession | GRPCTransportSession, Any],
         params: Any,
     ) -> GetTaskResult:
         """Handle tasks/get from server."""
@@ -90,7 +92,7 @@ def create_client_task_handlers(
         )
 
     async def handle_get_task_result(
-        context: RequestContext[ClientSession, Any],
+        context: RequestContext[ClientSession | GRPCTransportSession, Any],
         params: Any,
     ) -> GetTaskPayloadResult | ErrorData:
         """Handle tasks/result from server."""

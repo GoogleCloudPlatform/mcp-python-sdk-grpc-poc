@@ -115,7 +115,7 @@ async def test_client_handles_get_task_request(client_streams: ClientTestStreams
         received_task_id: str | None = None
 
         async def get_task_handler(
-            context: RequestContext[ClientSession, None],
+            context: RequestContext[ClientSession | GRPCTransportSession, None],
             params: GetTaskRequestParams,
         ) -> GetTaskResult | ErrorData:
             nonlocal received_task_id

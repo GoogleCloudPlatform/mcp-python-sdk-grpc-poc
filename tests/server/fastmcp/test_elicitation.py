@@ -75,7 +75,7 @@ async def test_stdio_elicitation():
 
     # Create a custom handler for elicitation requests
     async def elicitation_callback(
-        context: RequestContext[ClientSession, None], params: ElicitRequestParams
+        context: RequestContext[ClientSession | GRPCTransportSession, None], params: ElicitRequestParams
     ):  # pragma: no cover
         if params.message == "Tool wants to ask: What is your name?":
             return ElicitResult(action="accept", content={"answer": "Test User"})
