@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Union
 
 import anyio
 import pytest
@@ -26,6 +26,7 @@ from mcp.types import (
     ServerResult,
     TextContent,
 )
+from src.mcp.client.grpc_transport_session import GRPCTransportSession
 
 
 @pytest.mark.anyio
@@ -427,7 +428,7 @@ async def test_client_capabilities_with_custom_callbacks():
     received_capabilities = None
 
     async def custom_sampling_callback(  # pragma: no cover
-        context: RequestContext["ClientSession", Any],
+        context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
         params: types.CreateMessageRequestParams,
     ) -> types.CreateMessageResult | types.ErrorData:
         return types.CreateMessageResult(
@@ -437,7 +438,7 @@ async def test_client_capabilities_with_custom_callbacks():
         )
 
     async def custom_list_roots_callback(  # pragma: no cover
-        context: RequestContext["ClientSession", Any],
+        context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
     ) -> types.ListRootsResult | types.ErrorData:
         return types.ListRootsResult(roots=[])
 

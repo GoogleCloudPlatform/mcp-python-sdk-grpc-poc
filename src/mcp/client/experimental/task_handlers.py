@@ -13,7 +13,7 @@ Use cases:
 """
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, Union
 
 from pydantic import TypeAdapter
 
@@ -22,7 +22,7 @@ from mcp.shared.context import RequestContext
 from mcp.shared.session import RequestResponder
 
 if TYPE_CHECKING:
-    from mcp.client.session import ClientSession
+    from mcp.client.session import ClientSession, GRPCTransportSession
 
 
 class GetTaskHandlerFnT(Protocol):
@@ -33,7 +33,7 @@ class GetTaskHandlerFnT(Protocol):
 
     async def __call__(
         self,
-        context: RequestContext["ClientSession", Any],
+        context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
         params: types.GetTaskRequestParams,
     ) -> types.GetTaskResult | types.ErrorData: ...  # pragma: no branch
 
@@ -46,7 +46,7 @@ class GetTaskResultHandlerFnT(Protocol):
 
     async def __call__(
         self,
-        context: RequestContext["ClientSession", Any],
+        context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
         params: types.GetTaskPayloadRequestParams,
     ) -> types.GetTaskPayloadResult | types.ErrorData: ...  # pragma: no branch
 
@@ -59,7 +59,7 @@ class ListTasksHandlerFnT(Protocol):
 
     async def __call__(
         self,
-        context: RequestContext["ClientSession", Any],
+        context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
         params: types.PaginatedRequestParams | None,
     ) -> types.ListTasksResult | types.ErrorData: ...  # pragma: no branch
 
@@ -72,7 +72,7 @@ class CancelTaskHandlerFnT(Protocol):
 
     async def __call__(
         self,
-        context: RequestContext["ClientSession", Any],
+        context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
         params: types.CancelTaskRequestParams,
     ) -> types.CancelTaskResult | types.ErrorData: ...  # pragma: no branch
 
@@ -89,7 +89,7 @@ class TaskAugmentedSamplingFnT(Protocol):
 
     async def __call__(
         self,
-        context: RequestContext["ClientSession", Any],
+        context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
         params: types.CreateMessageRequestParams,
         task_metadata: types.TaskMetadata,
     ) -> types.CreateTaskResult | types.ErrorData: ...  # pragma: no branch
@@ -107,14 +107,14 @@ class TaskAugmentedElicitationFnT(Protocol):
 
     async def __call__(
         self,
-        context: RequestContext["ClientSession", Any],
+        context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
         params: types.ElicitRequestParams,
         task_metadata: types.TaskMetadata,
     ) -> types.CreateTaskResult | types.ErrorData: ...  # pragma: no branch
 
 
 async def default_get_task_handler(
-    context: RequestContext["ClientSession", Any],
+    context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
     params: types.GetTaskRequestParams,
 ) -> types.GetTaskResult | types.ErrorData:
     return types.ErrorData(
@@ -124,7 +124,7 @@ async def default_get_task_handler(
 
 
 async def default_get_task_result_handler(
-    context: RequestContext["ClientSession", Any],
+    context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
     params: types.GetTaskPayloadRequestParams,
 ) -> types.GetTaskPayloadResult | types.ErrorData:
     return types.ErrorData(
@@ -134,7 +134,7 @@ async def default_get_task_result_handler(
 
 
 async def default_list_tasks_handler(
-    context: RequestContext["ClientSession", Any],
+    context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
     params: types.PaginatedRequestParams | None,
 ) -> types.ListTasksResult | types.ErrorData:
     return types.ErrorData(
@@ -144,7 +144,7 @@ async def default_list_tasks_handler(
 
 
 async def default_cancel_task_handler(
-    context: RequestContext["ClientSession", Any],
+    context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
     params: types.CancelTaskRequestParams,
 ) -> types.CancelTaskResult | types.ErrorData:
     return types.ErrorData(
@@ -154,7 +154,7 @@ async def default_cancel_task_handler(
 
 
 async def default_task_augmented_sampling(
-    context: RequestContext["ClientSession", Any],
+    context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
     params: types.CreateMessageRequestParams,
     task_metadata: types.TaskMetadata,
 ) -> types.CreateTaskResult | types.ErrorData:
@@ -165,7 +165,7 @@ async def default_task_augmented_sampling(
 
 
 async def default_task_augmented_elicitation(
-    context: RequestContext["ClientSession", Any],
+    context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
     params: types.ElicitRequestParams,
     task_metadata: types.TaskMetadata,
 ) -> types.CreateTaskResult | types.ErrorData:
@@ -249,7 +249,7 @@ class ExperimentalTaskHandlers:
 
     async def handle_request(
         self,
-        ctx: RequestContext["ClientSession", Any],
+        ctx: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
         responder: RequestResponder[types.ServerRequest, types.ClientResult],
     ) -> None:
         """Handle a task-related request from the server.

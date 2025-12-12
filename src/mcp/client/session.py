@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta
-from typing import Any, Protocol, overload
+from typing import TYPE_CHECKING, Any, Union, overload
 
 import anyio.lowlevel
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
@@ -8,52 +8,22 @@ from pydantic import AnyUrl, TypeAdapter
 from typing_extensions import deprecated
 
 import mcp.types as types
+from mcp.client import session_common
 from mcp.client.experimental import ExperimentalClientFeatures
 from mcp.client.experimental.task_handlers import ExperimentalTaskHandlers
+from mcp.client.session_common import ElicitationFnT, ListRootsFnT, LoggingFnT, MessageHandlerFnT, SamplingFnT
+from mcp.client.transport_session import TransportSession
 from mcp.shared.context import RequestContext
 from mcp.shared.message import SessionMessage
 from mcp.shared.session import BaseSession, ProgressFnT, RequestResponder
 from mcp.shared.version import SUPPORTED_PROTOCOL_VERSIONS
 
+if TYPE_CHECKING:
+    from mcp.client.grpc_transport_session import GRPCTransportSession
+
 DEFAULT_CLIENT_INFO = types.Implementation(name="mcp", version="0.1.0")
 
 logger = logging.getLogger("client")
-
-
-class SamplingFnT(Protocol):
-    async def __call__(
-        self,
-        context: RequestContext["ClientSession", Any],
-        params: types.CreateMessageRequestParams,
-    ) -> types.CreateMessageResult | types.ErrorData: ...  # pragma: no branch
-
-
-class ElicitationFnT(Protocol):
-    async def __call__(
-        self,
-        context: RequestContext["ClientSession", Any],
-        params: types.ElicitRequestParams,
-    ) -> types.ElicitResult | types.ErrorData: ...  # pragma: no branch
-
-
-class ListRootsFnT(Protocol):
-    async def __call__(
-        self, context: RequestContext["ClientSession", Any]
-    ) -> types.ListRootsResult | types.ErrorData: ...  # pragma: no branch
-
-
-class LoggingFnT(Protocol):
-    async def __call__(
-        self,
-        params: types.LoggingMessageNotificationParams,
-    ) -> None: ...  # pragma: no branch
-
-
-class MessageHandlerFnT(Protocol):
-    async def __call__(
-        self,
-        message: RequestResponder[types.ServerRequest, types.ClientResult] | types.ServerNotification | Exception,
-    ) -> None: ...  # pragma: no branch
 
 
 async def _default_message_handler(
@@ -63,7 +33,7 @@ async def _default_message_handler(
 
 
 async def _default_sampling_callback(
-    context: RequestContext["ClientSession", Any],
+    context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
     params: types.CreateMessageRequestParams,
 ) -> types.CreateMessageResult | types.ErrorData:
     return types.ErrorData(
@@ -73,7 +43,7 @@ async def _default_sampling_callback(
 
 
 async def _default_elicitation_callback(
-    context: RequestContext["ClientSession", Any],
+    context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
     params: types.ElicitRequestParams,
 ) -> types.ElicitResult | types.ErrorData:
     return types.ErrorData(  # pragma: no cover
@@ -83,7 +53,7 @@ async def _default_elicitation_callback(
 
 
 async def _default_list_roots_callback(
-    context: RequestContext["ClientSession", Any],
+    context: RequestContext[Union["ClientSession", "GRPCTransportSession"], Any],
 ) -> types.ListRootsResult | types.ErrorData:
     return types.ErrorData(
         code=types.INVALID_REQUEST,
@@ -101,13 +71,14 @@ ClientResponse: TypeAdapter[types.ClientResult | types.ErrorData] = TypeAdapter(
 
 
 class ClientSession(
+    TransportSession,
     BaseSession[
         types.ClientRequest,
         types.ClientNotification,
         types.ClientResult,
         types.ServerRequest,
         types.ServerNotification,
-    ]
+    ],
 ):
     def __init__(
         self,
@@ -399,22 +370,9 @@ class ClientSession(
         output_schema = None
         if name in self._tool_output_schemas:
             output_schema = self._tool_output_schemas.get(name)
+            await session_common.validate_tool_result(output_schema, name, result)
         else:
             logger.warning(f"Tool {name} not listed by server, cannot validate any structured content")
-
-        if output_schema is not None:
-            from jsonschema import SchemaError, ValidationError, validate
-
-            if result.structuredContent is None:
-                raise RuntimeError(
-                    f"Tool {name} has an output schema but did not return structured content"
-                )  # pragma: no cover
-            try:
-                validate(result.structuredContent, output_schema)
-            except ValidationError as e:
-                raise RuntimeError(f"Invalid structured content returned by tool {name}: {e}")  # pragma: no cover
-            except SchemaError as e:  # pragma: no cover
-                raise RuntimeError(f"Invalid schema for tool {name}: {e}")  # pragma: no cover
 
     @overload
     @deprecated("Use list_prompts(params=PaginatedRequestParams(...)) instead")
@@ -537,7 +495,7 @@ class ClientSession(
         await self.send_notification(types.ClientNotification(types.RootsListChangedNotification()))
 
     async def _received_request(self, responder: RequestResponder[types.ServerRequest, types.ClientResult]) -> None:
-        ctx = RequestContext[ClientSession, Any](
+        ctx = RequestContext[Union["ClientSession", "GRPCTransportSession"], Any](
             request_id=responder.request_id,
             meta=responder.request_meta,
             session=self,

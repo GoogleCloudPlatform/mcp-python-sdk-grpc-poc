@@ -21,6 +21,7 @@ from mcp.types import (
     ServerCapabilities,
     ServerResult,
 )
+from src.mcp.client.grpc_transport_session import GRPCTransportSession
 
 
 @pytest.mark.anyio
@@ -94,13 +95,13 @@ async def test_client_capabilities_with_tasks():
 
     # Define custom handlers to trigger capability building (never actually called)
     async def my_list_tasks_handler(
-        context: RequestContext[ClientSession, None],
+        context: RequestContext[ClientSession | GRPCTransportSession, None],
         params: types.PaginatedRequestParams | None,
     ) -> types.ListTasksResult | types.ErrorData:
         raise NotImplementedError
 
     async def my_cancel_task_handler(
-        context: RequestContext[ClientSession, None],
+        context: RequestContext[ClientSession | GRPCTransportSession, None],
         params: types.CancelTaskRequestParams,
     ) -> types.CancelTaskResult | types.ErrorData:
         raise NotImplementedError
@@ -178,13 +179,13 @@ async def test_client_capabilities_auto_built_from_handlers():
 
     # Define custom handlers (not defaults)
     async def my_list_tasks_handler(
-        context: RequestContext[ClientSession, None],
+        context: RequestContext[ClientSession | GRPCTransportSession, None],
         params: types.PaginatedRequestParams | None,
     ) -> types.ListTasksResult | types.ErrorData:
         raise NotImplementedError
 
     async def my_cancel_task_handler(
-        context: RequestContext[ClientSession, None],
+        context: RequestContext[ClientSession | GRPCTransportSession, None],
         params: types.CancelTaskRequestParams,
     ) -> types.CancelTaskResult | types.ErrorData:
         raise NotImplementedError
@@ -263,7 +264,7 @@ async def test_client_capabilities_with_task_augmented_handlers():
 
     # Define task-augmented handler
     async def my_augmented_sampling_handler(
-        context: RequestContext[ClientSession, None],
+        context: RequestContext[ClientSession | GRPCTransportSession, None],
         params: types.CreateMessageRequestParams,
         task_metadata: types.TaskMetadata,
     ) -> types.CreateTaskResult | types.ErrorData:

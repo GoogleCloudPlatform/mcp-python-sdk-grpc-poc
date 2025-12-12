@@ -12,6 +12,7 @@ from collections.abc import (
     Iterable,
     Sequence,
 )
+from concurrent.futures import Executor
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from typing import Any, Generic, Literal
 
@@ -107,6 +108,18 @@ class Settings(BaseSettings, Generic[LifespanResultT]):
     stateless_http: bool
     """Define if the server should create a new transport per request."""
 
+    # gRPC settings
+    # TODO(asheshvidyut): Implement proper type hints for gRPC settings.
+    target: str
+    grpc_enable_reflection: bool
+    grpc_migration_thread_pool: Executor | None
+    grpc_handlers: Any | None
+    grpc_interceptors: Sequence[Any] | None
+    grpc_options: Any | None
+    grpc_maximum_concurrent_rpcs: int | None
+    grpc_compression: Any | None
+    grpc_credentials: Any | None
+
     # resource settings
     warn_on_duplicate_resources: bool
 
@@ -173,6 +186,15 @@ class FastMCP(Generic[LifespanResultT]):
         lifespan: (Callable[[FastMCP[LifespanResultT]], AbstractAsyncContextManager[LifespanResultT]] | None) = None,
         auth: AuthSettings | None = None,
         transport_security: TransportSecuritySettings | None = None,
+        target: str = "127.0.0.1:50051",
+        grpc_enable_reflection: bool = False,
+        grpc_migration_thread_pool: Executor | None = None,
+        grpc_handlers: Sequence[Any] | None = None,
+        grpc_interceptors: Sequence[Any] | None = None,
+        grpc_options: Any | None = None,
+        grpc_maximum_concurrent_rpcs: int | None = None,
+        grpc_compression: Any | None = None,
+        grpc_credentials: Any | None = None,
     ):
         # Auto-enable DNS rebinding protection for localhost (IPv4 and IPv6)
         if transport_security is None and host in ("127.0.0.1", "localhost", "::1"):
@@ -200,6 +222,15 @@ class FastMCP(Generic[LifespanResultT]):
             lifespan=lifespan,
             auth=auth,
             transport_security=transport_security,
+            target=target,
+            grpc_enable_reflection=grpc_enable_reflection,
+            grpc_migration_thread_pool=grpc_migration_thread_pool,
+            grpc_handlers=grpc_handlers,
+            grpc_interceptors=grpc_interceptors,
+            grpc_options=grpc_options,
+            grpc_maximum_concurrent_rpcs=grpc_maximum_concurrent_rpcs,
+            grpc_compression=grpc_compression,
+            grpc_credentials=grpc_credentials,
         )
 
         self._mcp_server = MCPServer(
@@ -278,7 +309,7 @@ class FastMCP(Generic[LifespanResultT]):
 
     def run(
         self,
-        transport: Literal["stdio", "sse", "streamable-http"] = "stdio",
+        transport: Literal["stdio", "sse", "streamable-http", "grpc"] = "stdio",
         mount_path: str | None = None,
     ) -> None:
         """Run the FastMCP server. Note this is a synchronous function.
@@ -287,7 +318,7 @@ class FastMCP(Generic[LifespanResultT]):
             transport: Transport protocol to use ("stdio", "sse", or "streamable-http")
             mount_path: Optional mount path for SSE transport
         """
-        TRANSPORTS = Literal["stdio", "sse", "streamable-http"]
+        TRANSPORTS = Literal["stdio", "sse", "streamable-http", "grpc"]
         if transport not in TRANSPORTS.__args__:  # type: ignore  # pragma: no cover
             raise ValueError(f"Unknown transport: {transport}")
 
@@ -298,6 +329,28 @@ class FastMCP(Generic[LifespanResultT]):
                 anyio.run(lambda: self.run_sse_async(mount_path))
             case "streamable-http":  # pragma: no cover
                 anyio.run(self.run_streamable_http_async)
+            case "grpc":  # pragma: no cover
+                anyio.run(self.run_grpc_async)
+
+    def add_to_existing_server(
+        self,
+        server: Any,
+        transport: Literal["sse", "streamable-http", "grpc"] = "grpc",
+    ) -> None:
+        match transport:
+            case "grpc":
+                """Attach the FastMCP server with a gRPC server."""
+                from mcp.server.grpc import (  # pylint: disable=g-import-not-at-top
+                    attach_mcp_server_to_grpc_server,
+                )
+
+                attach_mcp_server_to_grpc_server(self, server)
+            case "streamable-http":
+                raise ValueError("HTTP is not supported.")
+            case "sse":
+                raise ValueError("SSE is not supported.")
+            case _:
+                raise ValueError(f"Unknown transport: {transport}")
 
     def _setup_handlers(self) -> None:
         """Set up core MCP protocol handlers."""
@@ -335,14 +388,24 @@ class FastMCP(Generic[LifespanResultT]):
         during a request; outside a request, most methods will error.
         """
         try:
-            request_context = self._mcp_server.request_context
+            request_context: RequestContext[ServerSession, LifespanResultT, Request] | None = (
+                self._mcp_server.request_context
+            )
         except LookupError:
             request_context = None
         return Context(request_context=request_context, fastmcp=self)
 
-    async def call_tool(self, name: str, arguments: dict[str, Any]) -> Sequence[ContentBlock] | dict[str, Any]:
+    async def call_tool(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        request_context: RequestContext[ServerSession, LifespanResultT, Request] | None = None,
+    ) -> Sequence[ContentBlock] | dict[str, Any]:
         """Call a tool by name with arguments."""
-        context = self.get_context()
+        if request_context:
+            context = Context[ServerSession, LifespanResultT, Request](request_context=request_context, fastmcp=self)
+        else:
+            context = self.get_context()
         return await self._tool_manager.call_tool(name, arguments, context=context, convert_result=True)
 
     async def list_resources(self) -> list[MCPResource]:
@@ -767,6 +830,18 @@ class FastMCP(Generic[LifespanResultT]):
         )
         server = uvicorn.Server(config)
         await server.serve()
+
+    async def run_grpc_async(self) -> None:
+        """Run the server with gRPC transport."""
+        # Imports are not at the top of file because grpc
+        # is an optional dependency.
+        from mcp.server.grpc import create_mcp_grpc_server  # pylint: disable=g-import-not-at-top
+
+        server = await create_mcp_grpc_server(mcp_server=self, target=self.settings.target)
+        try:
+            await server.wait_for_termination()
+        finally:
+            await server.stop(1)
 
     async def run_streamable_http_async(self) -> None:  # pragma: no cover
         """Run the server using StreamableHTTP transport."""

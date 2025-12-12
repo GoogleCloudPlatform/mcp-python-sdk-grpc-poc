@@ -67,7 +67,7 @@ async def test_get_protocol_version_from_context_no_version(mock_context: Any):
     )
     mock_context.abort.assert_called_once_with(
         grpc.StatusCode.UNIMPLEMENTED,
-        "Protocol version not provided. Supported versions are: 2024-11-05, 2025-03-26, 2025-06-18",
+        "Protocol version not provided. Supported versions are: 2024-11-05, 2025-03-26, 2025-06-18, 2025-11-25",
     )
 
 
@@ -86,7 +86,8 @@ async def test_get_protocol_version_from_context_unsupported_version(mock_contex
     )
     mock_context.abort.assert_called_once_with(
         grpc.StatusCode.UNIMPLEMENTED,
-        "Unsupported protocol version: unsupported. Supported versions are: 2024-11-05, 2025-03-26, 2025-06-18",
+        "Unsupported protocol version: unsupported. "
+        + "Supported versions are: 2024-11-05, 2025-03-26, 2025-06-18, 2025-11-25",
     )
 
 
