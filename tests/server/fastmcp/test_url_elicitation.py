@@ -197,7 +197,7 @@ async def test_form_mode_still_works():
         assert result.data is not None
         return f"Hello, {result.data.name}!"
 
-    async def elicitation_callback(context: RequestContext[ClientSession, None], params: ElicitRequestParams):
+    async def elicitation_callback(context: RequestContext[ClientSession | GRPCTransportSession, None], params: ElicitRequestParams):
         # Verify form mode parameters
         assert params.mode == "form"
         assert isinstance(params, types.ElicitRequestFormParams)
@@ -300,7 +300,7 @@ async def test_elicit_url_typed_results():
         return "Not cancelled"  # pragma: no cover
 
     # Test declined result
-    async def decline_callback(context: RequestContext[ClientSession, None], params: ElicitRequestParams):
+    async def decline_callback(context: RequestContext[ClientSession | GRPCTransportSession, None], params: ElicitRequestParams):
         return ElicitResult(action="decline")
 
     async with create_connected_server_and_client_session(
