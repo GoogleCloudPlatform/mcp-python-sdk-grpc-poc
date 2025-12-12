@@ -121,7 +121,6 @@ class Settings(BaseSettings, Generic[LifespanResultT]):
     grpc_compression: Any | None
     grpc_credentials: Any | None
 
-
     # resource settings
     warn_on_duplicate_resources: bool
 
@@ -844,7 +843,6 @@ class FastMCP(Generic[LifespanResultT]):
             await server.wait_for_termination()
         finally:
             await server.stop(1)
-
 
     async def run_streamable_http_async(self) -> None:  # pragma: no cover
         """Run the server using StreamableHTTP transport."""
