@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from datetime import timedelta
 from typing import Any, cast
 
+import anyio.abc
 import grpc
 from google.protobuf import json_format
 from grpc import aio
@@ -38,6 +39,11 @@ class GRPCTransportSession(TransportSession):
 
     This class handles communication with the MCP gRPC server.
     """
+
+    # Task group for spawning background tasks when used with experimental task features
+    # This is set by the ambient task group when GRPCTransportSession is used
+    # in scenarios with ClientSession task handlers
+    _task_group: anyio.abc.TaskGroup
 
     def __init__(
         self,
