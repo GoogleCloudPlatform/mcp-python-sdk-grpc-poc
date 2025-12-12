@@ -327,7 +327,9 @@ class OAuthClientProvider(httpx.Auth):
         auth_params = {
             "response_type": "code",
             "client_id": self.context.client_info.client_id,
-            "redirect_uri": str(self.context.client_metadata.redirect_uris[0]),
+            "redirect_uri": str(self.context.client_metadata.redirect_uris[0])
+            if self.context.client_metadata.redirect_uris
+            else "",
             "state": state,
             "code_challenge": pkce_params.code_challenge,
             "code_challenge_method": "S256",
@@ -369,7 +371,9 @@ class OAuthClientProvider(httpx.Auth):
         token_data = {
             "grant_type": "authorization_code",
             "code": auth_code,
-            "redirect_uri": str(self.context.client_metadata.redirect_uris[0]),
+            "redirect_uri": str(self.context.client_metadata.redirect_uris[0])
+            if self.context.client_metadata.redirect_uris
+            else "",
             "client_id": self.context.client_info.client_id,
             "code_verifier": code_verifier,
         }

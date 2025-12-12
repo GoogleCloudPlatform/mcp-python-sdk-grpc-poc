@@ -7,7 +7,7 @@ from typing import Any
 import anyio
 import pytest
 
-from mcp.client.session import ClientSession, TransportSession
+from mcp.client.session import ClientSession
 from mcp.server import Server
 from mcp.server.lowlevel import NotificationOptions
 from mcp.server.models import InitializationOptions
@@ -20,7 +20,7 @@ from mcp.types import CallToolResult, ClientResult, ServerNotification, ServerRe
 async def run_tool_test(
     tools: list[Tool],
     call_tool_handler: Callable[[str, dict[str, Any]], Awaitable[list[TextContent]]],
-    test_callback: Callable[[TransportSession], Awaitable[CallToolResult]],
+    test_callback: Callable[[ClientSession], Awaitable[CallToolResult]],
 ) -> CallToolResult | None:
     """Helper to run a tool test with minimal boilerplate.
 
@@ -50,7 +50,7 @@ async def run_tool_test(
     async def message_handler(
         message: RequestResponder[ServerRequest, ClientResult] | ServerNotification | Exception,
     ) -> None:
-        if isinstance(message, Exception):
+        if isinstance(message, Exception):  # pragma: no cover
             raise message
 
     # Server task
@@ -122,10 +122,10 @@ async def test_valid_tool_call():
         if name == "add":
             result = arguments["a"] + arguments["b"]
             return [TextContent(type="text", text=f"Result: {result}")]
-        else:
+        else:  # pragma: no cover
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: TransportSession) -> CallToolResult:
+    async def test_callback(client_session: ClientSession) -> CallToolResult:
         return await client_session.call_tool("add", {"a": 5, "b": 3})
 
     result = await run_tool_test([create_add_tool()], call_tool_handler, test_callback)
@@ -143,11 +143,11 @@ async def test_valid_tool_call():
 async def test_invalid_tool_call_missing_required():
     """Test that missing required arguments fail validation."""
 
-    async def call_tool_handler(name: str, arguments: dict[str, Any]) -> list[TextContent]:
+    async def call_tool_handler(name: str, arguments: dict[str, Any]) -> list[TextContent]:  # pragma: no cover
         # This should not be reached due to validation
         raise RuntimeError("Should not reach here")
 
-    async def test_callback(client_session: TransportSession) -> CallToolResult:
+    async def test_callback(client_session: ClientSession) -> CallToolResult:
         return await client_session.call_tool("add", {"a": 5})  # missing 'b'
 
     result = await run_tool_test([create_add_tool()], call_tool_handler, test_callback)
@@ -166,11 +166,11 @@ async def test_invalid_tool_call_missing_required():
 async def test_invalid_tool_call_wrong_type():
     """Test that wrong argument types fail validation."""
 
-    async def call_tool_handler(name: str, arguments: dict[str, Any]) -> list[TextContent]:
+    async def call_tool_handler(name: str, arguments: dict[str, Any]) -> list[TextContent]:  # pragma: no cover
         # This should not be reached due to validation
         raise RuntimeError("Should not reach here")
 
-    async def test_callback(client_session: TransportSession) -> CallToolResult:
+    async def test_callback(client_session: ClientSession) -> CallToolResult:
         return await client_session.call_tool("add", {"a": "five", "b": 3})  # 'a' should be number
 
     result = await run_tool_test([create_add_tool()], call_tool_handler, test_callback)
@@ -207,10 +207,10 @@ async def test_cache_refresh_on_missing_tool():
         if name == "multiply":
             result = arguments["x"] * arguments["y"]
             return [TextContent(type="text", text=f"Result: {result}")]
-        else:
+        else:  # pragma: no cover
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: TransportSession) -> CallToolResult:
+    async def test_callback(client_session: ClientSession) -> CallToolResult:
         # Call tool without first listing tools (cache should be empty)
         # The cache should be refreshed automatically
         return await client_session.call_tool("multiply", {"x": 10, "y": 20})
@@ -244,11 +244,11 @@ async def test_enum_constraint_validation():
         )
     ]
 
-    async def call_tool_handler(name: str, arguments: dict[str, Any]) -> list[TextContent]:
+    async def call_tool_handler(name: str, arguments: dict[str, Any]) -> list[TextContent]:  # pragma: no cover
         # This should not be reached due to validation failure
         raise RuntimeError("Should not reach here")
 
-    async def test_callback(client_session: TransportSession) -> CallToolResult:
+    async def test_callback(client_session: ClientSession) -> CallToolResult:
         return await client_session.call_tool("greet", {"name": "Smith", "title": "Prof"})  # Invalid title
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
@@ -286,10 +286,10 @@ async def test_tool_not_in_list_logs_warning(caplog: pytest.LogCaptureFixture):
         if name == "unknown_tool":
             # Even with invalid arguments, this should execute since validation is skipped
             return [TextContent(type="text", text="Unknown tool executed without validation")]
-        else:
+        else:  # pragma: no cover
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: TransportSession) -> CallToolResult:
+    async def test_callback(client_session: ClientSession) -> CallToolResult:
         # Call a tool that's not in the list with invalid arguments
         # This should trigger the warning about validation not being performed
         return await client_session.call_tool("unknown_tool", {"invalid": "args"})
