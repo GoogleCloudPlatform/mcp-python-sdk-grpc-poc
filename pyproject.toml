@@ -42,6 +42,11 @@ dependencies = [
 rich = ["rich>=13.9.4"]
 cli = ["typer>=0.16.0", "python-dotenv>=1.0.0"]
 ws = ["websockets>=15.0.1"]
+grpc = [
+    "grpcio>=1.74.0",
+    "protobuf>=6.32.0",
+    "grpcio-reflection>=1.74.0"
+]
 
 [project.scripts]
 mcp = "mcp.cli:app [cli]"
@@ -105,6 +110,9 @@ executionEnvironments = [
     { root = "tests", extraPaths = ["."], reportUnusedFunction = false, reportPrivateUsage = false },
     { root = "examples/servers", reportUnusedFunction = false },
 ]
+# TODO(asheshvidyut) remove exclusion for test_grpc_transport_session_mocks.py
+# , once it is fixed
+exclude = ["src/mcp/proto", "tests/client/test_grpc_transport_session_mocks.py"]
 
 [tool.ruff]
 line-length = 120
