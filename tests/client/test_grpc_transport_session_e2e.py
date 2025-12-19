@@ -509,6 +509,7 @@ async def test_list_tools_grpc_transport_failure(server_port: int) -> None:
                 "size": None,
                 "annotations": None,
                 "_meta": None,
+                "icons": None,
                 "type": "resource_link",
             },
         ),

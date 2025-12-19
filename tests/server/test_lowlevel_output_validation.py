@@ -7,7 +7,7 @@ from typing import Any
 import anyio
 import pytest
 
-from mcp.client.session import ClientSession, TransportSession
+from mcp.client.session import ClientSession
 from mcp.server import Server
 from mcp.server.lowlevel import NotificationOptions
 from mcp.server.models import InitializationOptions
@@ -20,7 +20,7 @@ from mcp.types import CallToolResult, ClientResult, ServerNotification, ServerRe
 async def run_tool_test(
     tools: list[Tool],
     call_tool_handler: Callable[[str, dict[str, Any]], Awaitable[Any]],
-    test_callback: Callable[[TransportSession], Awaitable[CallToolResult]],
+    test_callback: Callable[[ClientSession], Awaitable[CallToolResult]],
 ) -> CallToolResult | None:
     """Helper to run a tool test with minimal boilerplate.
 
@@ -48,7 +48,7 @@ async def run_tool_test(
     client_to_server_send, client_to_server_receive = anyio.create_memory_object_stream[SessionMessage](10)
 
     # Message handler for client
-    async def message_handler(
+    async def message_handler(  # pragma: no cover
         message: RequestResponder[ServerRequest, ClientResult] | ServerNotification | Exception,
     ) -> None:
         if isinstance(message, Exception):
@@ -119,10 +119,10 @@ async def test_content_only_without_output_schema():
     async def call_tool_handler(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         if name == "echo":
             return [TextContent(type="text", text=f"Echo: {arguments['message']}")]
-        else:
+        else:  # pragma: no cover
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: TransportSession) -> CallToolResult:
+    async def test_callback(client_session: ClientSession) -> CallToolResult:
         return await client_session.call_tool("echo", {"message": "Hello"})
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
@@ -155,10 +155,10 @@ async def test_dict_only_without_output_schema():
     async def call_tool_handler(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         if name == "get_info":
             return {"status": "ok", "data": {"value": 42}}
-        else:
+        else:  # pragma: no cover
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: TransportSession) -> CallToolResult:
+    async def test_callback(client_session: ClientSession) -> CallToolResult:
         return await client_session.call_tool("get_info", {})
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
@@ -194,10 +194,10 @@ async def test_both_content_and_dict_without_output_schema():
             content = [TextContent(type="text", text="Processing complete")]
             data = {"result": "success", "count": 10}
             return (content, data)
-        else:
+        else:  # pragma: no cover
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: TransportSession) -> CallToolResult:
+    async def test_callback(client_session: ClientSession) -> CallToolResult:
         return await client_session.call_tool("process", {})
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
@@ -237,7 +237,7 @@ async def test_content_only_with_output_schema_error():
         # This returns only content, but outputSchema expects structured data
         return [TextContent(type="text", text="This is not structured")]
 
-    async def test_callback(client_session: TransportSession) -> CallToolResult:
+    async def test_callback(client_session: ClientSession) -> CallToolResult:
         return await client_session.call_tool("structured_tool", {})
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
@@ -282,10 +282,10 @@ async def test_valid_dict_with_output_schema():
             x = arguments["x"]
             y = arguments["y"]
             return {"sum": x + y, "product": x * y}
-        else:
+        else:  # pragma: no cover
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: TransportSession) -> CallToolResult:
+    async def test_callback(client_session: ClientSession) -> CallToolResult:
         return await client_session.call_tool("calc", {"x": 3, "y": 4})
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
@@ -326,10 +326,10 @@ async def test_invalid_dict_with_output_schema():
         if name == "user_info":
             # Missing required 'age' field
             return {"name": "Alice"}
-        else:
+        else:  # pragma: no cover
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: TransportSession) -> CallToolResult:
+    async def test_callback(client_session: ClientSession) -> CallToolResult:
         return await client_session.call_tool("user_info", {})
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
@@ -374,10 +374,10 @@ async def test_both_content_and_valid_dict_with_output_schema():
             content = [TextContent(type="text", text=f"Analysis of: {arguments['text']}")]
             data = {"sentiment": "positive", "confidence": 0.95}
             return (content, data)
-        else:
+        else:  # pragma: no cover
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: TransportSession) -> CallToolResult:
+    async def test_callback(client_session: ClientSession) -> CallToolResult:
         return await client_session.call_tool("analyze", {"text": "Great job!"})
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
@@ -389,6 +389,47 @@ async def test_both_content_and_valid_dict_with_output_schema():
     assert result.content[0].type == "text"
     assert result.content[0].text == "Analysis of: Great job!"
     assert result.structuredContent == {"sentiment": "positive", "confidence": 0.95}
+
+
+@pytest.mark.anyio
+async def test_tool_call_result():
+    """Test returning ToolCallResult when no outputSchema is defined."""
+    tools = [
+        Tool(
+            name="get_info",
+            description="Get structured information",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+            },
+            # No outputSchema for direct return of tool call result
+        )
+    ]
+
+    async def call_tool_handler(name: str, arguments: dict[str, Any]) -> CallToolResult:
+        if name == "get_info":
+            return CallToolResult(
+                content=[TextContent(type="text", text="Results calculated")],
+                structuredContent={"status": "ok", "data": {"value": 42}},
+                _meta={"some": "metadata"},
+            )
+        else:  # pragma: no cover
+            raise ValueError(f"Unknown tool: {name}")
+
+    async def test_callback(client_session: ClientSession) -> CallToolResult:
+        return await client_session.call_tool("get_info", {})
+
+    result = await run_tool_test(tools, call_tool_handler, test_callback)
+
+    # Verify results
+    assert result is not None
+    assert not result.isError
+    assert len(result.content) == 1
+    assert result.content[0].type == "text"
+    assert result.content[0].text == "Results calculated"
+    assert isinstance(result.content[0], TextContent)
+    assert result.structuredContent == {"status": "ok", "data": {"value": 42}}
+    assert result.meta == {"some": "metadata"}
 
 
 @pytest.mark.anyio
@@ -418,10 +459,10 @@ async def test_output_schema_type_validation():
         if name == "stats":
             # Wrong type for 'count' - should be integer
             return {"count": "five", "average": 2.5, "items": ["a", "b"]}
-        else:
+        else:  # pragma: no cover
             raise ValueError(f"Unknown tool: {name}")
 
-    async def test_callback(client_session: TransportSession) -> CallToolResult:
+    async def test_callback(client_session: ClientSession) -> CallToolResult:
         return await client_session.call_tool("stats", {})
 
     result = await run_tool_test(tools, call_tool_handler, test_callback)
