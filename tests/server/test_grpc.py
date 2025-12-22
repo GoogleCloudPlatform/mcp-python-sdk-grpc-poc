@@ -241,10 +241,7 @@ async def test_call_tool_protocol_version_supported(
         common=mcp_pb2.RequestFields(), request=mcp_pb2.CallToolRequest.Request(name=tool_name, arguments=args_struct)
     )
 
-    async def request_iterator():
-        yield request
-
-    call = grpc_stub.CallTool(request_iterator(), metadata=metadata)
+    call = grpc_stub.CallTool(request, metadata=metadata)
     responses = [item async for item in call]
     assert len(responses) == 1
     assert responses[0].content[0].text.text == "Hello, Test! Welcome to the Simple gRPC Server!"
@@ -270,11 +267,8 @@ async def test_call_tool_protocol_version_none(grpc_server: None, grpc_stub: "Mc
         common=mcp_pb2.RequestFields(), request=mcp_pb2.CallToolRequest.Request(name=tool_name, arguments=args_struct)
     )
 
-    async def request_iterator():
-        yield request
-
     with pytest.raises(grpc.aio.AioRpcError) as excinfo:
-        async for _ in grpc_stub.CallTool(request_iterator()):
+        async for _ in grpc_stub.CallTool(request):
             pass
     assert excinfo.value.code() == grpc.StatusCode.UNIMPLEMENTED
     assert "Protocol version not provided." in (excinfo.value.details() or "")
@@ -326,11 +320,8 @@ async def test_call_tool_unsupported_version_returns_latest(grpc_server: None, g
         common=mcp_pb2.RequestFields(), request=mcp_pb2.CallToolRequest.Request(name=tool_name, arguments=args_struct)
     )
 
-    async def request_iterator():
-        yield request
-
     with pytest.raises(grpc.aio.AioRpcError) as excinfo:
-        async for _ in grpc_stub.CallTool(request_iterator(), metadata=metadata):
+        async for _ in grpc_stub.CallTool(request, metadata=metadata):
             pass
     assert excinfo.value.code() == grpc.StatusCode.UNIMPLEMENTED
 
@@ -794,11 +785,8 @@ async def test_call_tool_grpc_greet(grpc_server: None, grpc_stub: "McpAsyncStub"
         common=mcp_pb2.RequestFields(), request=mcp_pb2.CallToolRequest.Request(name=tool_name, arguments=args_struct)
     )
 
-    async def request_iterator():
-        yield request
-
     metadata = (("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION),)
-    responses = [response async for response in grpc_stub.CallTool(request_iterator(), metadata=metadata)]
+    responses = [response async for response in grpc_stub.CallTool(request, metadata=metadata)]
 
     assert len(responses) == 1
     assert responses[0].content[0].text.text == "Hello, Test! Welcome to the Simple gRPC Server!"
@@ -818,11 +806,9 @@ async def test_call_tool_grpc_invalid_input(grpc_server: None, grpc_stub: "McpAs
         common=mcp_pb2.RequestFields(), request=mcp_pb2.CallToolRequest.Request(name=tool_name, arguments=args_struct)
     )
 
-    async def request_iterator():
-        yield request
 
     metadata = (("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION),)
-    responses = [response async for response in grpc_stub.CallTool(request_iterator(), metadata=metadata)]
+    responses = [response async for response in grpc_stub.CallTool(request, metadata=metadata)]
 
     assert len(responses) == 1
     assert responses[0].is_error
@@ -841,11 +827,8 @@ async def test_call_tool_grpc_test_tool(grpc_server: None, grpc_stub: "McpAsyncS
         common=mcp_pb2.RequestFields(), request=mcp_pb2.CallToolRequest.Request(name=tool_name, arguments=args_struct)
     )
 
-    async def request_iterator():
-        yield request
-
     metadata = (("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION),)
-    responses = [response async for response in grpc_stub.CallTool(request_iterator(), metadata=metadata)]
+    responses = [response async for response in grpc_stub.CallTool(request, metadata=metadata)]
 
     assert len(responses) == 1
     assert responses[0].content[0].text.text == "3"
@@ -865,11 +848,8 @@ async def test_call_failing_tool_grpc(grpc_server: None, grpc_stub: "McpAsyncStu
         common=mcp_pb2.RequestFields(), request=mcp_pb2.CallToolRequest.Request(name=tool_name, arguments=args_struct)
     )
 
-    async def request_iterator():
-        yield request
-
     metadata = (("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION),)
-    responses = [response async for response in grpc_stub.CallTool(request_iterator(), metadata=metadata)]
+    responses = [response async for response in grpc_stub.CallTool(request, metadata=metadata)]
 
     assert len(responses) == 1
     assert responses[0].is_error
@@ -888,11 +868,8 @@ async def test_call_tool_not_found_grpc(grpc_server: None, grpc_stub: "McpAsyncS
         common=mcp_pb2.RequestFields(), request=mcp_pb2.CallToolRequest.Request(name=tool_name, arguments=args_struct)
     )
 
-    async def request_iterator():
-        yield request
-
     metadata = (("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION),)
-    responses = [response async for response in grpc_stub.CallTool(request_iterator(), metadata=metadata)]
+    responses = [response async for response in grpc_stub.CallTool(request, metadata=metadata)]
 
     assert len(responses) == 1
     assert responses[0].is_error
@@ -911,11 +888,8 @@ async def test_call_tool_grpc_list_tool(grpc_server: None, grpc_stub: "McpAsyncS
         common=mcp_pb2.RequestFields(), request=mcp_pb2.CallToolRequest.Request(name=tool_name, arguments=args_struct)
     )
 
-    async def request_iterator():
-        yield request
-
     metadata = (("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION),)
-    responses = [response async for response in grpc_stub.CallTool(request_iterator(), metadata=metadata)]
+    responses = [response async for response in grpc_stub.CallTool(request, metadata=metadata)]
 
     assert len(responses) == 1
     assert responses[0].content[0].text.text == "one"
@@ -929,11 +903,8 @@ async def test_call_tool_grpc_no_initial_request(grpc_server: None, grpc_stub: "
     """Test CallTool via gRPC with no initial request."""
     request = mcp_pb2.CallToolRequest(common=mcp_pb2.RequestFields())
 
-    async def request_iterator():
-        yield request
-
     metadata = (("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION),)
-    responses = [response async for response in grpc_stub.CallTool(request_iterator(), metadata=metadata)]
+    responses = [response async for response in grpc_stub.CallTool(request, metadata=metadata)]
 
     assert len(responses) == 1
     assert responses[0].is_error
@@ -952,11 +923,8 @@ async def test_call_tool_grpc_dict_tool(grpc_server: None, grpc_stub: "McpAsyncS
         common=mcp_pb2.RequestFields(), request=mcp_pb2.CallToolRequest.Request(name=tool_name, arguments=args_struct)
     )
 
-    async def request_iterator():
-        yield request
-
     metadata = (("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION),)
-    responses = [response async for response in grpc_stub.CallTool(request_iterator(), metadata=metadata)]
+    responses = [response async for response in grpc_stub.CallTool(request, metadata=metadata)]
 
     assert len(responses) == 1
     assert json.loads(responses[0].content[0].text.text) == {"key": "value"}
@@ -975,11 +943,8 @@ async def test_call_tool_grpc_structured_dict_tool(grpc_server: None, grpc_stub:
         common=mcp_pb2.RequestFields(), request=mcp_pb2.CallToolRequest.Request(name=tool_name, arguments=args_struct)
     )
 
-    async def request_iterator():
-        yield request
-
     metadata = (("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION),)
-    responses = [response async for response in grpc_stub.CallTool(request_iterator(), metadata=metadata)]
+    responses = [response async for response in grpc_stub.CallTool(request, metadata=metadata)]
 
     assert len(responses) == 1
     assert json.loads(responses[0].content[0].text.text) == {"key": "value"}

@@ -7,7 +7,8 @@ from typing import Any, cast
 
 import anyio.abc
 import grpc
-from google.protobuf import json_format
+from google.protobuf import json_format  # isort: skip
+from google.protobuf import struct_pb2  # isort: skip
 from grpc import aio
 from pydantic import AnyUrl
 
@@ -368,9 +369,20 @@ class GRPCTransportSession(TransportSession):
             is_error: bool = False
             timeout_td: timedelta | None = None
             try:
-                request_iterator = convert.generate_call_tool_requests(
-                    self.request_generator(name, request_id, arguments)
-                )
+                request = mcp_pb2.CallToolRequest()
+                request.common.progress.progress_token = str(request_id)
+                args_struct = None
+                if arguments:
+                     try:
+                         args_struct = json_format.ParseDict(arguments, struct_pb2.Struct())
+                     except json_format.ParseError as e:
+                         error_message = f'Failed to parse tool arguments for "{name}": {e}'
+                         logger.error(error_message, exc_info=True)
+                         raise McpError(ErrorData(code=types.PARSE_ERROR, message=error_message)) from e
+                request.request.name = name
+                if args_struct:
+                    request.request.arguments.CopyFrom(args_struct)
+
                 # read_timeout_seconds takes precedence over session timeout
                 timeout_td: timedelta | None = read_timeout_seconds or self._session_read_timeout_seconds
                 timeout = timeout_td.total_seconds() if timeout_td else None
@@ -379,7 +391,7 @@ class GRPCTransportSession(TransportSession):
                     (grpc_utils.MCP_PROTOCOL_VERSION_KEY, self.negotiated_version),
                 ]
                 call = self.grpc_stub.CallTool(  # type: ignore
-                    request_iterator,
+                    request,
                     timeout=timeout,
                     metadata=metadata,
                 )
