@@ -806,7 +806,6 @@ async def test_call_tool_grpc_invalid_input(grpc_server: None, grpc_stub: "McpAs
         common=mcp_pb2.RequestFields(), request=mcp_pb2.CallToolRequest.Request(name=tool_name, arguments=args_struct)
     )
 
-
     metadata = (("mcp-protocol-version", version.LATEST_PROTOCOL_VERSION),)
     responses = [response async for response in grpc_stub.CallTool(request, metadata=metadata)]
 

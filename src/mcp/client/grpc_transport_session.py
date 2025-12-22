@@ -373,12 +373,12 @@ class GRPCTransportSession(TransportSession):
                 request.common.progress.progress_token = str(request_id)
                 args_struct = None
                 if arguments:
-                     try:
-                         args_struct = json_format.ParseDict(arguments, struct_pb2.Struct())
-                     except json_format.ParseError as e:
-                         error_message = f'Failed to parse tool arguments for "{name}": {e}'
-                         logger.error(error_message, exc_info=True)
-                         raise McpError(ErrorData(code=types.PARSE_ERROR, message=error_message)) from e
+                    try:
+                        args_struct = json_format.ParseDict(arguments, struct_pb2.Struct())
+                    except json_format.ParseError as e:
+                        error_message = f'Failed to parse tool arguments for "{name}": {e}'
+                        logger.error(error_message, exc_info=True)
+                        raise McpError(ErrorData(code=types.PARSE_ERROR, message=error_message)) from e
                 request.request.name = name
                 if args_struct:
                     request.request.arguments.CopyFrom(args_struct)
