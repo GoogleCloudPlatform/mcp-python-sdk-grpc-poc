@@ -6,7 +6,7 @@ This module provides a gRPC transport for MCP servers.
 
 import asyncio
 import logging
-from collections.abc import AsyncIterator
+
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
