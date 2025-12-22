@@ -7,6 +7,7 @@ from typing import Any, cast
 
 import anyio.abc
 import grpc
+
 from google.protobuf import json_format  # isort: skip
 from google.protobuf import struct_pb2  # isort: skip
 from grpc import aio
