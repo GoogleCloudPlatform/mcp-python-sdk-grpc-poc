@@ -72,49 +72,79 @@ class LogMessage(_message.Message):
     data: _struct_pb2.Value
     def __init__(self, log_level: _Optional[_Union[LogLevel, str]] = ..., logger: _Optional[str] = ..., data: _Optional[_Union[_struct_pb2.Value, _Mapping]] = ...) -> None: ...
 
-class RequestFields(_message.Message):
-    __slots__ = ("metadata", "cursor", "progress", "last_event_id", "set_log_level", "sampling_create_message_result", "root_list_result", "elicit_result")
-    METADATA_FIELD_NUMBER: _ClassVar[int]
-    CURSOR_FIELD_NUMBER: _ClassVar[int]
-    PROGRESS_FIELD_NUMBER: _ClassVar[int]
-    LAST_EVENT_ID_FIELD_NUMBER: _ClassVar[int]
-    SET_LOG_LEVEL_FIELD_NUMBER: _ClassVar[int]
-    SAMPLING_CREATE_MESSAGE_RESULT_FIELD_NUMBER: _ClassVar[int]
-    ROOT_LIST_RESULT_FIELD_NUMBER: _ClassVar[int]
-    ELICIT_RESULT_FIELD_NUMBER: _ClassVar[int]
-    metadata: _struct_pb2.Struct
-    cursor: str
-    progress: ProgressNotification
-    last_event_id: str
-    set_log_level: LogLevel
-    sampling_create_message_result: SamplingCreateMessageResult
-    root_list_result: ListRootsResult
-    elicit_result: ElicitResult
-    def __init__(self, metadata: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., cursor: _Optional[str] = ..., progress: _Optional[_Union[ProgressNotification, _Mapping]] = ..., last_event_id: _Optional[str] = ..., set_log_level: _Optional[_Union[LogLevel, str]] = ..., sampling_create_message_result: _Optional[_Union[SamplingCreateMessageResult, _Mapping]] = ..., root_list_result: _Optional[_Union[ListRootsResult, _Mapping]] = ..., elicit_result: _Optional[_Union[ElicitResult, _Mapping]] = ...) -> None: ...
-
-class ResponseFields(_message.Message):
-    __slots__ = ("instructions", "event_id", "metadata", "next_cursor", "progress", "log_message", "sampling_create_message", "list_roots_request", "notify_on_root_list_update", "elicit_request")
-    INSTRUCTIONS_FIELD_NUMBER: _ClassVar[int]
-    EVENT_ID_FIELD_NUMBER: _ClassVar[int]
-    METADATA_FIELD_NUMBER: _ClassVar[int]
-    NEXT_CURSOR_FIELD_NUMBER: _ClassVar[int]
-    PROGRESS_FIELD_NUMBER: _ClassVar[int]
-    LOG_MESSAGE_FIELD_NUMBER: _ClassVar[int]
+class ServerInitiatedRequest(_message.Message):
+    __slots__ = ("sampling_create_message", "list_roots_request", "notify_on_root_list_update", "elicit_request")
     SAMPLING_CREATE_MESSAGE_FIELD_NUMBER: _ClassVar[int]
     LIST_ROOTS_REQUEST_FIELD_NUMBER: _ClassVar[int]
     NOTIFY_ON_ROOT_LIST_UPDATE_FIELD_NUMBER: _ClassVar[int]
     ELICIT_REQUEST_FIELD_NUMBER: _ClassVar[int]
-    instructions: str
-    event_id: str
-    metadata: _struct_pb2.Struct
-    next_cursor: str
-    progress: ProgressNotification
-    log_message: LogMessage
     sampling_create_message: SamplingCreateMessageRequest
     list_roots_request: ListRootsRequest
     notify_on_root_list_update: bool
     elicit_request: ElicitRequest
-    def __init__(self, instructions: _Optional[str] = ..., event_id: _Optional[str] = ..., metadata: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., next_cursor: _Optional[str] = ..., progress: _Optional[_Union[ProgressNotification, _Mapping]] = ..., log_message: _Optional[_Union[LogMessage, _Mapping]] = ..., sampling_create_message: _Optional[_Union[SamplingCreateMessageRequest, _Mapping]] = ..., list_roots_request: _Optional[_Union[ListRootsRequest, _Mapping]] = ..., notify_on_root_list_update: bool = ..., elicit_request: _Optional[_Union[ElicitRequest, _Mapping]] = ...) -> None: ...
+    def __init__(self, sampling_create_message: _Optional[_Union[SamplingCreateMessageRequest, _Mapping]] = ..., list_roots_request: _Optional[_Union[ListRootsRequest, _Mapping]] = ..., notify_on_root_list_update: bool = ..., elicit_request: _Optional[_Union[ElicitRequest, _Mapping]] = ...) -> None: ...
+
+class ServerInitiatedResponse(_message.Message):
+    __slots__ = ("sampling_create_message_result", "root_list_result", "elicit_result")
+    SAMPLING_CREATE_MESSAGE_RESULT_FIELD_NUMBER: _ClassVar[int]
+    ROOT_LIST_RESULT_FIELD_NUMBER: _ClassVar[int]
+    ELICIT_RESULT_FIELD_NUMBER: _ClassVar[int]
+    sampling_create_message_result: SamplingCreateMessageResult
+    root_list_result: ListRootsResult
+    elicit_result: ElicitResult
+    def __init__(self, sampling_create_message_result: _Optional[_Union[SamplingCreateMessageResult, _Mapping]] = ..., root_list_result: _Optional[_Union[ListRootsResult, _Mapping]] = ..., elicit_result: _Optional[_Union[ElicitResult, _Mapping]] = ...) -> None: ...
+
+class RequestFields(_message.Message):
+    __slots__ = ("metadata", "cursor", "progress", "log_level", "task_id", "dependent_responses", "resume_data")
+    class DependentResponsesEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: ServerInitiatedResponse
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[_Union[ServerInitiatedResponse, _Mapping]] = ...) -> None: ...
+    METADATA_FIELD_NUMBER: _ClassVar[int]
+    CURSOR_FIELD_NUMBER: _ClassVar[int]
+    PROGRESS_FIELD_NUMBER: _ClassVar[int]
+    LOG_LEVEL_FIELD_NUMBER: _ClassVar[int]
+    TASK_ID_FIELD_NUMBER: _ClassVar[int]
+    DEPENDENT_RESPONSES_FIELD_NUMBER: _ClassVar[int]
+    RESUME_DATA_FIELD_NUMBER: _ClassVar[int]
+    metadata: _struct_pb2.Struct
+    cursor: str
+    progress: ProgressNotification
+    log_level: LogLevel
+    task_id: str
+    dependent_responses: _containers.MessageMap[str, ServerInitiatedResponse]
+    resume_data: _struct_pb2.Struct
+    def __init__(self, metadata: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., cursor: _Optional[str] = ..., progress: _Optional[_Union[ProgressNotification, _Mapping]] = ..., log_level: _Optional[_Union[LogLevel, str]] = ..., task_id: _Optional[str] = ..., dependent_responses: _Optional[_Mapping[str, ServerInitiatedResponse]] = ..., resume_data: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ...) -> None: ...
+
+class ResponseFields(_message.Message):
+    __slots__ = ("instructions", "metadata", "next_cursor", "progress", "log_message", "task_id", "dependent_requests", "resume_data")
+    class DependentRequestsEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: ServerInitiatedRequest
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[_Union[ServerInitiatedRequest, _Mapping]] = ...) -> None: ...
+    INSTRUCTIONS_FIELD_NUMBER: _ClassVar[int]
+    METADATA_FIELD_NUMBER: _ClassVar[int]
+    NEXT_CURSOR_FIELD_NUMBER: _ClassVar[int]
+    PROGRESS_FIELD_NUMBER: _ClassVar[int]
+    LOG_MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    TASK_ID_FIELD_NUMBER: _ClassVar[int]
+    DEPENDENT_REQUESTS_FIELD_NUMBER: _ClassVar[int]
+    RESUME_DATA_FIELD_NUMBER: _ClassVar[int]
+    instructions: str
+    metadata: _struct_pb2.Struct
+    next_cursor: str
+    progress: ProgressNotification
+    log_message: LogMessage
+    task_id: str
+    dependent_requests: _containers.MessageMap[str, ServerInitiatedRequest]
+    resume_data: _struct_pb2.Struct
+    def __init__(self, instructions: _Optional[str] = ..., metadata: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., next_cursor: _Optional[str] = ..., progress: _Optional[_Union[ProgressNotification, _Mapping]] = ..., log_message: _Optional[_Union[LogMessage, _Mapping]] = ..., task_id: _Optional[str] = ..., dependent_requests: _Optional[_Mapping[str, ServerInitiatedRequest]] = ..., resume_data: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ...) -> None: ...
 
 class Annotations(_message.Message):
     __slots__ = ("audience", "priority")
@@ -664,3 +694,15 @@ class CompletionResponse(_message.Message):
     total_matches: int
     has_more: bool
     def __init__(self, common: _Optional[_Union[ResponseFields, _Mapping]] = ..., values: _Optional[_Iterable[str]] = ..., total_matches: _Optional[int] = ..., has_more: bool = ...) -> None: ...
+
+class CancelTaskRequest(_message.Message):
+    __slots__ = ("common",)
+    COMMON_FIELD_NUMBER: _ClassVar[int]
+    common: RequestFields
+    def __init__(self, common: _Optional[_Union[RequestFields, _Mapping]] = ...) -> None: ...
+
+class CancelTaskResponse(_message.Message):
+    __slots__ = ("common",)
+    COMMON_FIELD_NUMBER: _ClassVar[int]
+    common: ResponseFields
+    def __init__(self, common: _Optional[_Union[ResponseFields, _Mapping]] = ...) -> None: ...

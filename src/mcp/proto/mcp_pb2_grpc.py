@@ -67,7 +67,7 @@ class McpStub(object):
                 request_serializer=mcp_dot_proto_dot_mcp__pb2.ListToolsRequest.SerializeToString,
                 response_deserializer=mcp_dot_proto_dot_mcp__pb2.ListToolsResponse.FromString,
                 _registered_method=True)
-        self.CallTool = channel.stream_stream(
+        self.CallTool = channel.unary_stream(
                 '/model_context_protocol.Mcp/CallTool',
                 request_serializer=mcp_dot_proto_dot_mcp__pb2.CallToolRequest.SerializeToString,
                 response_deserializer=mcp_dot_proto_dot_mcp__pb2.CallToolResponse.FromString,
@@ -76,6 +76,11 @@ class McpStub(object):
                 '/model_context_protocol.Mcp/Complete',
                 request_serializer=mcp_dot_proto_dot_mcp__pb2.CompletionRequest.SerializeToString,
                 response_deserializer=mcp_dot_proto_dot_mcp__pb2.CompletionResponse.FromString,
+                _registered_method=True)
+        self.CancelTask = channel.unary_unary(
+                '/model_context_protocol.Mcp/CancelTask',
+                request_serializer=mcp_dot_proto_dot_mcp__pb2.CancelTaskRequest.SerializeToString,
+                response_deserializer=mcp_dot_proto_dot_mcp__pb2.CancelTaskResponse.FromString,
                 _registered_method=True)
 
 
@@ -124,7 +129,7 @@ class McpServicer(object):
         """Get a prompt.
         In order to better integrate with existing data plane mechanisms for
         request routing and authz, the client will add a header called
-        mcp_resource whose value is the name of the prompt being requested.
+        mcp_prompt whose value is the name of the prompt being requested.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -141,11 +146,11 @@ class McpServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def CallTool(self, request_iterator, context):
+    def CallTool(self, request, context):
         """Call a tool.
         In order to better integrate with existing data plane mechanisms for
         request routing and authz, the client will add a header called
-        mcp_resource whose value is the name of the tool being called.
+        mcp_tool whose value is the name of the tool being called.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -161,6 +166,16 @@ class McpServicer(object):
         request routing and authz, the client will add a header called
         mcp_resource whose value is the name of the resource or prompt being
         used for completion.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CancelTask(self, request, context):
+        """
+        Cancellation
+
+
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -199,7 +214,7 @@ def add_McpServicer_to_server(servicer, server):
                     request_deserializer=mcp_dot_proto_dot_mcp__pb2.ListToolsRequest.FromString,
                     response_serializer=mcp_dot_proto_dot_mcp__pb2.ListToolsResponse.SerializeToString,
             ),
-            'CallTool': grpc.stream_stream_rpc_method_handler(
+            'CallTool': grpc.unary_stream_rpc_method_handler(
                     servicer.CallTool,
                     request_deserializer=mcp_dot_proto_dot_mcp__pb2.CallToolRequest.FromString,
                     response_serializer=mcp_dot_proto_dot_mcp__pb2.CallToolResponse.SerializeToString,
@@ -208,6 +223,11 @@ def add_McpServicer_to_server(servicer, server):
                     servicer.Complete,
                     request_deserializer=mcp_dot_proto_dot_mcp__pb2.CompletionRequest.FromString,
                     response_serializer=mcp_dot_proto_dot_mcp__pb2.CompletionResponse.SerializeToString,
+            ),
+            'CancelTask': grpc.unary_unary_rpc_method_handler(
+                    servicer.CancelTask,
+                    request_deserializer=mcp_dot_proto_dot_mcp__pb2.CancelTaskRequest.FromString,
+                    response_serializer=mcp_dot_proto_dot_mcp__pb2.CancelTaskResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -386,7 +406,7 @@ class Mcp(object):
             _registered_method=True)
 
     @staticmethod
-    def CallTool(request_iterator,
+    def CallTool(request,
             target,
             options=(),
             channel_credentials=None,
@@ -396,8 +416,8 @@ class Mcp(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.stream_stream(
-            request_iterator,
+        return grpc.experimental.unary_stream(
+            request,
             target,
             '/model_context_protocol.Mcp/CallTool',
             mcp_dot_proto_dot_mcp__pb2.CallToolRequest.SerializeToString,
@@ -429,6 +449,33 @@ class Mcp(object):
             '/model_context_protocol.Mcp/Complete',
             mcp_dot_proto_dot_mcp__pb2.CompletionRequest.SerializeToString,
             mcp_dot_proto_dot_mcp__pb2.CompletionResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def CancelTask(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/model_context_protocol.Mcp/CancelTask',
+            mcp_dot_proto_dot_mcp__pb2.CancelTaskRequest.SerializeToString,
+            mcp_dot_proto_dot_mcp__pb2.CancelTaskResponse.FromString,
             options,
             channel_credentials,
             insecure,
