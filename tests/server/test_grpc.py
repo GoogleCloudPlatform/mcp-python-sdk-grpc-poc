@@ -34,7 +34,7 @@ if TYPE_CHECKING:
         ListPrompts: grpc.aio.UnaryUnaryMultiCallable[mcp_pb2.ListPromptsRequest, mcp_pb2.ListPromptsResponse]
         GetPrompt: grpc.aio.UnaryUnaryMultiCallable[mcp_pb2.GetPromptRequest, mcp_pb2.GetPromptResponse]
         ListTools: grpc.aio.UnaryUnaryMultiCallable[mcp_pb2.ListToolsRequest, mcp_pb2.ListToolsResponse]
-        CallTool: grpc.aio.StreamStreamMultiCallable[mcp_pb2.CallToolRequest, mcp_pb2.CallToolResponse]
+        CallTool: grpc.aio.UnaryStreamMultiCallable[mcp_pb2.CallToolRequest, mcp_pb2.CallToolResponse]
         Complete: grpc.aio.UnaryUnaryMultiCallable[mcp_pb2.CompletionRequest, mcp_pb2.CompletionResponse]
 
 
