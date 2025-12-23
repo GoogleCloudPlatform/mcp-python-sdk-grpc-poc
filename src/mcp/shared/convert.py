@@ -468,9 +468,7 @@ async def generate_call_tool_request(
 
 
 async def generate_call_tool_requests(
-    request_params_iterable: AsyncGenerator[
-        types.CallToolRequestParams | types.ProgressNotification, None
-    ],
+    request_params_iterable: AsyncGenerator[types.CallToolRequestParams | types.ProgressNotification, None],
 ) -> AsyncGenerator[mcp_pb2.CallToolRequest, None]:
     """Generates CallToolRequest protos from a stream of request params."""
     async for request_params in request_params_iterable:
