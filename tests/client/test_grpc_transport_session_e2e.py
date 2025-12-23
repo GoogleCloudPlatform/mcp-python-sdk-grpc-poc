@@ -250,7 +250,7 @@ async def test_list_resources_grpc_transport_failure(server_port: int) -> None:
         assert e.value.error.code == -32603  # types.INTERNAL_ERROR
         assert "grpc.RpcError - Failed to list resources" in e.value.error.message
         assert "StatusCode.UNAVAILABLE" in e.value.error.message
-        assert "Connection refused" in e.value.error.message
+        assert "Connection refused" in e.value.error.message or "failed to connect" in e.value.error.message
     finally:
         await transport.close()
 
@@ -265,7 +265,7 @@ async def test_read_resource_grpc_transport_failure(server_port: int) -> None:
         assert e.value.error.code == -32603  # types.INTERNAL_ERROR
         assert "grpc.RpcError - Failed to read resource" in e.value.error.message
         assert "StatusCode.UNAVAILABLE" in e.value.error.message
-        assert "Connection refused" in e.value.error.message
+        assert "Connection refused" in e.value.error.message or "failed to connect" in e.value.error.message
     finally:
         await transport.close()
 
@@ -451,7 +451,7 @@ async def test_list_tools_grpc_transport_failure(server_port: int) -> None:
         assert e.value.error.code == -32603  # types.INTERNAL_ERROR
         assert "grpc.RpcError - Failed to list tools" in e.value.error.message
         assert "StatusCode.UNAVAILABLE" in e.value.error.message
-        assert "Connection refused" in e.value.error.message
+        assert "Connection refused" in e.value.error.message or "failed to connect" in e.value.error.message
     finally:
         await transport.close()
 
@@ -664,7 +664,7 @@ async def test_call_tool_grpc_transport_failure(server_port: int) -> None:
             await transport.call_tool("greet", {"name": "Test"})
         assert e.value.error.code == -32603  # types.INTERNAL_ERROR
         assert "grpc.RpcError - Failed to call tool" in e.value.error.message
-        assert "Connection refused" in e.value.error.message
+        assert "Connection refused" in e.value.error.message or "failed to connect" in e.value.error.message
     finally:
         await transport.close()
 

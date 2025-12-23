@@ -341,15 +341,6 @@ class GRPCTransportSession(TransportSession):
         """Send a resources/unsubscribe request."""
         ...
 
-    async def request_generator(self, name: str, request_id: int, arguments: Any | None = None):
-        """Yields the single tool call request."""
-        logger.info("Calling tool '%s' with request_id: %s", name, request_id)
-        yield types.CallToolRequestParams(
-            name=name,
-            arguments=arguments or {},
-            _meta=types.RequestParams.Meta(progressToken=request_id),
-        )
-
     async def call_tool(
         self,
         name: str,
@@ -370,20 +361,13 @@ class GRPCTransportSession(TransportSession):
             is_error: bool = False
             timeout_td: timedelta | None = None
             try:
-                request = mcp_pb2.CallToolRequest()
-                request.common.progress.progress_token = str(request_id)
-                args_struct = None
-                if arguments:
-                    try:
-                        args_struct = json_format.ParseDict(arguments, struct_pb2.Struct())
-                    except json_format.ParseError as e:
-                        error_message = f'Failed to parse tool arguments for "{name}": {e}'
-                        logger.error(error_message, exc_info=True)
-                        raise McpError(ErrorData(code=types.PARSE_ERROR, message=error_message)) from e
-                request.request.name = name
-                if args_struct:
-                    request.request.arguments.CopyFrom(args_struct)
-
+                request = await convert.generate_call_tool_request(
+                    types.CallToolRequestParams(
+                        name=name,
+                        arguments=arguments or {},
+                        _meta=types.RequestParams.Meta(progressToken=request_id),
+                    )
+                )
                 # read_timeout_seconds takes precedence over session timeout
                 timeout_td: timedelta | None = read_timeout_seconds or self._session_read_timeout_seconds
                 timeout = timeout_td.total_seconds() if timeout_td else None
