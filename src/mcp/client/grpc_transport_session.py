@@ -368,8 +368,12 @@ class GRPCTransportSession(TransportSession):
             is_error: bool = False
             timeout_td: timedelta | None = None
             try:
-                request_iterator = convert.generate_call_tool_requests(
-                    self.request_generator(name, request_id, arguments)
+                request = convert.call_tool_request_params_to_proto(
+                    types.CallToolRequestParams(
+                        name=name,
+                        arguments=arguments or {},
+                        _meta=types.RequestParams.Meta(progressToken=request_id),
+                    )
                 )
                 # read_timeout_seconds takes precedence over session timeout
                 timeout_td: timedelta | None = read_timeout_seconds or self._session_read_timeout_seconds
@@ -379,7 +383,7 @@ class GRPCTransportSession(TransportSession):
                     (grpc_utils.MCP_PROTOCOL_VERSION_KEY, self.negotiated_version),
                 ]
                 call = self.grpc_stub.CallTool(  # type: ignore
-                    request_iterator,
+                    request,
                     timeout=timeout,
                     metadata=metadata,
                 )

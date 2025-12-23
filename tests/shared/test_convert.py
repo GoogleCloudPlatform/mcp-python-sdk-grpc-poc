@@ -9,7 +9,7 @@ import pytest
 
 from google.protobuf import duration_pb2  # isort: skip
 from google.protobuf import json_format  # isort: skip
-from google.protobuf.struct_pb2 import Struct
+from google.protobuf import struct_pb2  # isort: skip
 from pydantic import AnyUrl
 
 from mcp import types
@@ -348,8 +348,8 @@ def test_tool_proto_to_type_valid():
     tool_proto = mcp_pb2.Tool(
         name="test_tool",
         description="A test tool",
-        input_schema=json_format.ParseDict(input_schema, Struct()),
-        output_schema=json_format.ParseDict(output_schema, Struct()),
+        input_schema=json_format.ParseDict(input_schema, struct_pb2.Struct()),
+        output_schema=json_format.ParseDict(output_schema, struct_pb2.Struct()),
     )
     expected_tool_type = types.Tool(
         name="test_tool",
@@ -368,8 +368,8 @@ def test_tool_proto_to_type_empty_schemas():
     tool_proto = mcp_pb2.Tool(
         name="empty_tool",
         description="No schemas",
-        input_schema=json_format.ParseDict({}, Struct()),
-        output_schema=json_format.ParseDict({}, Struct()),
+        input_schema=json_format.ParseDict({}, struct_pb2.Struct()),
+        output_schema=json_format.ParseDict({}, struct_pb2.Struct()),
     )
     expected_tool_type = types.Tool(
         name="empty_tool",
@@ -393,8 +393,8 @@ def test_tool_proto_to_type_invalid_schema_json():
     tool_proto = mcp_pb2.Tool(
         name="bad_tool",
         description="Bad schema tool",
-        input_schema=json_format.ParseDict(input_schema, Struct()),
-        output_schema=json_format.ParseDict(output_schema, Struct()),
+        input_schema=json_format.ParseDict(input_schema, struct_pb2.Struct()),
+        output_schema=json_format.ParseDict(output_schema, struct_pb2.Struct()),
     )
 
     with pytest.raises(json_format.ParseError) as excinfo:
@@ -421,8 +421,8 @@ def test_tool_type_to_proto_valid():
     expected_tool_proto = mcp_pb2.Tool(
         name="test_tool",
         description="A test tool",
-        input_schema=json_format.ParseDict(input_schema, Struct()),
-        output_schema=json_format.ParseDict(output_schema, Struct()),
+        input_schema=json_format.ParseDict(input_schema, struct_pb2.Struct()),
+        output_schema=json_format.ParseDict(output_schema, struct_pb2.Struct()),
     )
 
     converted_tool_proto = convert.tool_type_to_proto(tool_type)
@@ -484,14 +484,14 @@ def test_tool_types_to_protos():
         mcp_pb2.Tool(
             name="tool1",
             description="Tool 1",
-            input_schema=json_format.ParseDict({}, Struct()),
-            output_schema=json_format.ParseDict({}, Struct()),
+            input_schema=json_format.ParseDict({}, struct_pb2.Struct()),
+            output_schema=json_format.ParseDict({}, struct_pb2.Struct()),
         ),
         mcp_pb2.Tool(
             name="tool2",
             description="Tool 2",
-            input_schema=json_format.ParseDict({"type": "string"}, Struct()),
-            output_schema=json_format.ParseDict({"type": "number"}, Struct()),
+            input_schema=json_format.ParseDict({"type": "string"}, struct_pb2.Struct()),
+            output_schema=json_format.ParseDict({"type": "number"}, struct_pb2.Struct()),
         ),
     ]
 
@@ -506,14 +506,14 @@ def test_tool_protos_to_types():
         mcp_pb2.Tool(
             name="tool1",
             description="Tool 1",
-            input_schema=json_format.ParseDict({}, Struct()),
-            output_schema=json_format.ParseDict({}, Struct()),
+            input_schema=json_format.ParseDict({}, struct_pb2.Struct()),
+            output_schema=json_format.ParseDict({}, struct_pb2.Struct()),
         ),
         mcp_pb2.Tool(
             name="tool2",
             description="Tool 2",
-            input_schema=json_format.ParseDict({"type": "string"}, Struct()),
-            output_schema=json_format.ParseDict({"type": "number"}, Struct()),
+            input_schema=json_format.ParseDict({"type": "string"}, struct_pb2.Struct()),
+            output_schema=json_format.ParseDict({"type": "number"}, struct_pb2.Struct()),
         ),
     ]
     expected_types = [
@@ -775,108 +775,59 @@ def test_proto_result_to_content_error():
     assert types_result.isError is True
 
 
-@pytest.mark.anyio
-async def test_generate_call_tool_requests_call():
-    """Test generation of call tool requests."""
+def test_call_tool_request_params_to_proto_basic():
+    """Test basic conversion of CallToolRequestParams to proto."""
+    request_params = types.CallToolRequestParams(name="test_tool", arguments={"arg1": "value1", "arg2": 123})
 
-    async def requests_gen():
-        yield types.CallToolRequestParams(
-            name="test_tool",
-            arguments={"arg1": "value1"},
-        )
+    proto_request = convert.call_tool_request_params_to_proto(request_params)
 
-    generator = convert.generate_call_tool_requests(requests_gen())
-    request = await generator.__anext__()
-    assert request.request.name == "test_tool"
-    assert request.request.arguments == json_format.ParseDict({"arg1": "value1"}, Struct())
+    assert isinstance(proto_request, mcp_pb2.CallToolRequest)
+    assert proto_request.request.name == "test_tool"
+    assert not proto_request.common.progress.progress_token
 
-
-@pytest.mark.anyio
-async def test_generate_call_tool_requests_progress():
-    """Test generation of progress notification requests."""
-
-    async def requests_gen():
-        yield types.ProgressNotification(
-            method="notifications/progress",
-            params=types.ProgressNotificationParams(
-                progressToken="token1", progress=50, total=100, message="In progress"
-            ),
-        )
-
-    generator = convert.generate_call_tool_requests(requests_gen())
-    request = await generator.__anext__()
-    assert request.common.progress.progress_token == "token1"
-    assert request.common.progress.progress == 50
-    assert request.common.progress.total == 100
-    assert request.common.progress.message == "In progress"
+    expected_args = struct_pb2.Struct()
+    json_format.ParseDict({"arg1": "value1", "arg2": 123}, expected_args)
+    assert proto_request.request.arguments == expected_args
 
 
-@pytest.mark.anyio
-async def test_generate_call_tool_requests_progress_minimal():
-    """Test generation of progress notification requests with minimal fields."""
+def test_call_tool_request_params_to_proto_with_progress_token():
+    """Test conversion with a progress token."""
+    request_params = types.CallToolRequestParams(
+        name="progress_tool",
+        arguments={"data": True},
+        _meta=types.RequestParams.Meta(progressToken=99),
+    )
 
-    async def requests_gen():
-        yield types.ProgressNotification(
-            method="notifications/progress",
-            params=types.ProgressNotificationParams(progressToken="token1", progress=50, total=None, message=None),
-        )
+    proto_request = convert.call_tool_request_params_to_proto(request_params)
 
-    generator = convert.generate_call_tool_requests(requests_gen())
-    request = await generator.__anext__()
-    assert request.common.progress.progress_token == "token1"
-    assert request.common.progress.progress == 50
-    assert request.common.progress.total == 0
-    assert request.common.progress.message == ""
+    assert proto_request.request.name == "progress_tool"
+    assert proto_request.common.progress.progress_token == "99"
 
-
-@pytest.mark.anyio
-async def test_generate_call_tool_requests_progress_no_message():
-    """Test generation of progress notification requests with no message."""
-
-    async def requests_gen():
-        yield types.ProgressNotification(
-            method="notifications/progress",
-            params=types.ProgressNotificationParams(progressToken="token1", progress=50, total=100, message=None),
-        )
-
-    generator = convert.generate_call_tool_requests(requests_gen())
-    request = await generator.__anext__()
-    assert request.common.progress.progress_token == "token1"
-    assert request.common.progress.progress == 50
-    assert request.common.progress.total == 100
-    assert request.common.progress.message == ""
+    expected_args = struct_pb2.Struct()
+    json_format.ParseDict({"data": True}, expected_args)
+    assert proto_request.request.arguments == expected_args
 
 
-@pytest.mark.anyio
-async def test_generate_call_tool_requests_progress_no_total():
-    """Test generation of progress notification requests with no total."""
+def test_call_tool_request_params_to_proto_no_args():
+    """Test conversion with no arguments."""
+    request_params = types.CallToolRequestParams(name="simple_tool")
 
-    async def requests_gen():
-        yield types.ProgressNotification(
-            method="notifications/progress",
-            params=types.ProgressNotificationParams(
-                progressToken="token1", progress=50, total=None, message="In progress"
-            ),
-        )
+    proto_request = convert.call_tool_request_params_to_proto(request_params)
 
-    generator = convert.generate_call_tool_requests(requests_gen())
-    request = await generator.__anext__()
-    assert request.common.progress.progress_token == "token1"
-    assert request.common.progress.progress == 50
-    assert request.common.progress.total == 0
-    assert request.common.progress.message == "In progress"
+    assert proto_request.request.name == "simple_tool"
+    # The 'arguments' field will be a default/empty Struct, which is correct.
+    assert not proto_request.request.arguments.fields
+    assert not proto_request.common.progress.progress_token
 
 
-@pytest.mark.anyio
-async def test_generate_call_tool_requests_bad_args():
-    """Test generation of call tool requests with bad arguments."""
+def test_call_tool_request_params_to_proto_parse_error():
+    """Test that a ParseError during argument conversion raises McpError."""
+    # Use a non-JSON-serializable type to trigger an error in ParseDict
+    bad_arguments = {"bad": timedelta(seconds=1)}
+    request_params = types.CallToolRequestParams(name="bad_args_tool", arguments=bad_arguments)
 
-    async def requests_gen():
-        yield types.CallToolRequestParams(
-            name="test_tool",
-            arguments={"arg1": set()},  # set is not serializable to JSON
-        )
+    with pytest.raises(McpError) as excinfo:
+        convert.call_tool_request_params_to_proto(request_params)
 
-    generator = convert.generate_call_tool_requests(requests_gen())
-    with pytest.raises(McpError):
-        await generator.__anext__()
+    assert excinfo.value.error.code == types.PARSE_ERROR
+    assert 'Failed to parse tool arguments for "bad_args_tool"' in excinfo.value.error.message

@@ -3,7 +3,7 @@
 import base64
 import json
 import logging
-from collections.abc import AsyncGenerator, Iterable, Sequence
+from collections.abc import Iterable, Sequence
 from datetime import timedelta
 from typing import Any, TypeAlias, cast
 
@@ -422,47 +422,30 @@ def normalize_and_validate_tool_results(
     return (list(unstructured_content) if unstructured_content else None), maybe_structured_content
 
 
-async def generate_call_tool_requests(
-    requests: AsyncGenerator[types.CallToolRequestParams | types.ProgressNotification, None],
-) -> AsyncGenerator[mcp_pb2.CallToolRequest, None]:
-    """Generates CallToolRequest protos from a stream of request params."""
-    async for request_params in requests:
-        request = mcp_pb2.CallToolRequest()
-
-        if isinstance(request_params, types.CallToolRequestParams):
-            name = request_params.name
-            arguments = request_params.arguments
-            meta = request_params.meta
-            if meta and meta.progressToken is not None:
-                logger.info(
-                    "Forwarding progressToken %s for tool %s",
-                    meta.progressToken,
-                    name,
-                )
-                request.common.progress.progress_token = str(meta.progressToken)
-            args_struct = None
-            if arguments:
-                try:
-                    args_struct = json_format.ParseDict(arguments, struct_pb2.Struct())
-                except json_format.ParseError as e:
-                    error_message = f'Failed to parse tool arguments for "{name}": {e}'
-                    logger.error(error_message, exc_info=True)
-                    raise McpError(ErrorData(code=types.PARSE_ERROR, message=error_message)) from e
-            request.request.name = name
-            if args_struct:
-                request.request.arguments.CopyFrom(args_struct)
-
-        elif isinstance(request_params, types.ProgressNotification):  # type: ignore
-            progress_token = request_params.params.progressToken
-            progress = request_params.params.progress
-            total = request_params.params.total
-            message = request_params.params.message
-
-            request.common.progress.progress_token = str(progress_token)
-            request.common.progress.progress = progress
-            if total is not None:
-                request.common.progress.total = total
-            if message is not None:
-                request.common.progress.message = message
-
-        yield request
+def call_tool_request_params_to_proto(
+    request_params: types.CallToolRequestParams,
+) -> mcp_pb2.CallToolRequest:
+    """Converts a CallToolRequestParams to a CallToolRequest proto."""
+    request = mcp_pb2.CallToolRequest()
+    name = request_params.name
+    arguments = request_params.arguments
+    meta = request_params.meta
+    if meta and meta.progressToken is not None:
+        logger.info(
+            "Forwarding progressToken %s for tool %s",
+            meta.progressToken,
+            name,
+        )
+        request.common.progress.progress_token = str(meta.progressToken)
+    args_struct = None
+    if arguments:
+        try:
+            args_struct = json_format.ParseDict(arguments, struct_pb2.Struct())
+        except json_format.ParseError as e:
+            error_message = f'Failed to parse tool arguments for "{name}": {e}'
+            logger.error(error_message, exc_info=True)
+            raise McpError(ErrorData(code=types.PARSE_ERROR, message=error_message)) from e
+    request.request.name = name
+    if args_struct:
+        request.request.arguments.CopyFrom(args_struct)
+    return request
