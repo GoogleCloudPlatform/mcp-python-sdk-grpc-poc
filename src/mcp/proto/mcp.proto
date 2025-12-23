@@ -35,7 +35,7 @@ service Mcp {
   // Get a prompt.
   // In order to better integrate with existing data plane mechanisms for
   // request routing and authz, the client will add a header called
-  // mcp_resource whose value is the name of the prompt being requested.
+  // mcp_prompt whose value is the name of the prompt being requested.
   rpc GetPrompt(GetPromptRequest) returns (GetPromptResponse);
 
   //
@@ -48,8 +48,8 @@ service Mcp {
   // Call a tool.
   // In order to better integrate with existing data plane mechanisms for
   // request routing and authz, the client will add a header called
-  // mcp_resource whose value is the name of the tool being called.
-  rpc CallTool(stream CallToolRequest) returns (stream CallToolResponse);
+  // mcp_tool whose value is the name of the tool being called.
+  rpc CallTool(CallToolRequest) returns (stream CallToolResponse);
 
   //
   // Completions
@@ -61,6 +61,12 @@ service Mcp {
   // mcp_resource whose value is the name of the resource or prompt being
   // used for completion.
   rpc Complete(CompletionRequest) returns (CompletionResponse);
+
+  //
+  // Cancellation
+  //
+
+  rpc CancelTask(CancelTaskRequest) returns (CancelTaskResponse);
 }
 
 enum ProtocolVersion {
@@ -101,55 +107,10 @@ message LogMessage {
   google.protobuf.Value data = 3;
 }
 
-// Common fields used in all requests from client to server.
-message RequestFields {
-  // Escape hatch for arbitrary side-channel data.
-  google.protobuf.Struct metadata = 2;
-
-  // Pagination support, as described in
-  // https://modelcontextprotocol.io/specification/2025-03-26/server/utilities/pagination.
-  string cursor = 3;  // Optional.
-  ProgressNotification progress = 4;
-
-  // Supports session resumability, as described in
-  // https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#resumability-and-redelivery.
-  string last_event_id = 5;  // Optional.
-
-  LogLevel set_log_level = 6;  // Optional.
-
-  // Sampling, as per
-  // https://modelcontextprotocol.io/specification/2025-03-26/client/sampling.
-  SamplingCreateMessageResult sampling_create_message_result = 7;
-
-  // Root list response, as per
-  // https://modelcontextprotocol.io/specification/2025-03-26/client/roots.
-  ListRootsResult root_list_result = 8;
-
-  // Elicitation response, as per
-  // https://modelcontextprotocol.io/specification/2025-06-18/client/elicitation.
-  ElicitResult elicit_result = 9;
-}
-
-// Common fields used in all responses from server to client.
-message ResponseFields {
-  // Optional.  Sent only on the initial response on any RPC.
-  string instructions = 2;
-
-  // Optional.  Sent only on the initial response on any RPC.
-  // Supports session resumability, as described in
-  // https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#resumability-and-redelivery.
-  string event_id = 3;
-
-  // Escape hatch for arbitrary side-channel data.
-  google.protobuf.Struct metadata = 4;
-
-  // Pagination support, as described in
-  // https://modelcontextprotocol.io/specification/2025-03-26/server/utilities/pagination.
-  string next_cursor = 5;  // Optional.
-
-  ProgressNotification progress = 6;
-
-  LogMessage log_message = 7;  // Optional.
+// Requests sent from the server to the client.
+message ServerInitiatedRequest {
+  // Exactly one of these fields must be populated.
+  // (Not using "oneof", since that causes forward-compatibility problems.)
 
   // Sampling, as per
   // https://modelcontextprotocol.io/specification/2025-03-26/client/sampling.
@@ -164,6 +125,83 @@ message ResponseFields {
   // https://modelcontextprotocol.io/specification/2025-06-18/client/elicitation.
   ElicitRequest elicit_request = 11;
 }
+
+// Responses to server-initiated requests.
+message ServerInitiatedResponse {
+  // Exactly one of these fields must be populated.
+  // (Not using "oneof", since that causes forward-compatibility problems.)
+
+  // Sampling, as per
+  // https://modelcontextprotocol.io/specification/2025-03-26/client/sampling.
+  SamplingCreateMessageResult sampling_create_message_result = 7;
+
+  // Root list response, as per
+  // https://modelcontextprotocol.io/specification/2025-03-26/client/roots.
+  ListRootsResult root_list_result = 8;
+
+  // Elicitation response, as per
+  // https://modelcontextprotocol.io/specification/2025-06-18/client/elicitation.
+  ElicitResult elicit_result = 9;
+}
+
+// Common fields used in all requests from client to server.
+message RequestFields {
+  // Escape hatch for arbitrary side-channel data.
+  google.protobuf.Struct metadata = 1;
+
+  // Pagination support, as described in
+  // https://modelcontextprotocol.io/specification/2025-03-26/server/utilities/pagination.
+  string cursor = 2;  // Optional.
+
+  ProgressNotification progress = 3;
+
+  // Asks the server to send logs at a particular level.
+  LogLevel log_level = 4;  // Optional.
+
+  // The task ID supplied by the server, if any.
+  string task_id = 5;  // Optional.
+
+  // Responses to server-initiated requests.
+  map<string, ServerInitiatedResponse> dependent_responses = 6;
+
+  // State that the server gave us to echo back in subsequent RPCs for the
+  // same peristant request.
+  google.protobuf.Struct resume_data = 7;
+}
+
+// Common fields used in all responses from server to client.
+message ResponseFields {
+  // Optional.  Sent only on the initial response on any RPC.
+  string instructions = 1;
+
+  // Escape hatch for arbitrary side-channel data.
+  google.protobuf.Struct metadata = 2;
+
+  // Pagination support, as described in
+  // https://modelcontextprotocol.io/specification/2025-03-26/server/utilities/pagination.
+  string next_cursor = 3;  // Optional.
+
+  ProgressNotification progress = 4;
+
+  LogMessage log_message = 5;  // Optional.
+
+  // Optional.  Sent only on the initial response on any RPC.
+  // If populated, this indicates that the server has started a
+  // persistent task, and the client is expected to echo back this ID
+  // in all subsequent RPCs related to the same request.
+  string task_id = 6;
+
+  // Dependent requests.  The presence of this field tells the client
+  // that the request is incomplete and that the client must try its
+  // request again with the result of these dependent requests in the
+  // dependent_responses field.
+  map<string, ServerInitiatedRequest> dependent_requests = 7;
+
+  // State for the client to echo back in subsequent RPCs for the
+  // same peristant request.
+  google.protobuf.Struct resume_data = 8;
+}
+
 enum Role {
   ROLE_UNKNOWN = 0;
   ROLE_USER = 1;
@@ -191,6 +229,7 @@ message AudioContent {
   string mime_type = 2;
   Annotations annotations = 3;  // Optional.
 }
+
 message ListRootsRequest {}
 
 message ListRootsResult {
@@ -245,6 +284,7 @@ message SamplingCreateMessageResult {
   string model = 2;
   string stop_reason = 3;  // Optional.
 }
+
 message PrimitiveSchemaDefinition {
   message StringSchema {
     enum Format {
@@ -305,6 +345,7 @@ message ElicitResult {
   Type type = 1;
   google.protobuf.Struct content = 2;
 }
+
 //
 // ListResources method
 //
@@ -429,6 +470,7 @@ message PromptMessage {
   EmbeddedResource embedded_resource = 5;
   Resource resource_link = 6;
 }
+
 message GetPromptRequest {
   RequestFields common = 1;
   string name = 2;
@@ -440,6 +482,7 @@ message GetPromptResponse {
   string description = 2;  // Optional.
   repeated PromptMessage messages = 3;
 }
+
 //
 // ListTools and WatchToolList methods
 //
@@ -553,3 +596,16 @@ message CompletionResponse {
   int64 total_matches = 3;  // Optional.
   bool has_more = 4;        // Optional.
 }
+
+//
+// Cancellation
+//
+
+message CancelTaskRequest {
+  RequestFields common = 1;  // task_id must be populated.
+}
+
+message CancelTaskResponse {
+  ResponseFields common = 1;
+}
+

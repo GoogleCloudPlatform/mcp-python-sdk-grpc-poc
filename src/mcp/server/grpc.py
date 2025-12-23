@@ -6,7 +6,6 @@ This module provides a gRPC transport for MCP servers.
 
 import asyncio
 import logging
-from collections.abc import AsyncIterator
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
@@ -181,16 +180,13 @@ class McpServicer(mcp_pb2_grpc.McpServicer):
 
     async def tool_runner(
         self,
-        request_iterator: AsyncIterator[mcp_pb2.CallToolRequest],
+        request: mcp_pb2.CallToolRequest,
         response_queue: "asyncio.Queue[mcp_pb2.CallToolResponse | None]",
         context: grpc.ServicerContext,
     ):
         """Runs the tool and puts the final result on the queue."""
         tool_name = None
-        request = None
         try:
-            request = await request_iterator.__anext__()
-
             if not request.HasField("request"):
                 raise grpc.RpcError(
                     grpc.StatusCode.INVALID_ARGUMENT,
@@ -261,14 +257,14 @@ class McpServicer(mcp_pb2_grpc.McpServicer):
     @grpc_utils.check_protocol_version_from_metadata
     async def CallTool(
         self,
-        request_iterator: AsyncIterator[mcp_pb2.CallToolRequest],
+        request: mcp_pb2.CallToolRequest,
         context: grpc.ServicerContext,
     ):
         """Call a tool."""
 
         response_queue: asyncio.Queue[mcp_pb2.CallToolResponse | None] = asyncio.Queue()
 
-        tool_task = asyncio.create_task(self.tool_runner(request_iterator, response_queue, context))
+        tool_task = asyncio.create_task(self.tool_runner(request, response_queue, context))
         try:
             while True:
                 item = await response_queue.get()
